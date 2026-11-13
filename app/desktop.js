@@ -22,7 +22,7 @@
   `;
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
-  widget.innerHTML='<span class="ob-version">OBRAČUN Windows <b>v0.1.2</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.innerHTML='<span class="ob-version">OBRAČUN Windows <b>v0.1.3</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';
   overlay.innerHTML=`<div id="ob-update-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-heading">
