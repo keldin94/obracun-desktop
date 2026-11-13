@@ -1,0 +1,51 @@
+name: Build and release Windows desktop app
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9f9a64 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Go toolchain
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
+      - name: Unit tests
+        run: go test ./...
+      - name: Build Windows executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GOOS=windows GOARCH=amd64 CGO_ENABLED=0
+          go build -trimpath -ldflags='-s -w -H=windowsgui' -o Obracun-Windows.exe .
+          test -s Obracun-Windows.exe
+          sha256sum Obracun-Windows.exe > Obracun-Windows.exe.sha256
+          mkdir -p windows-package
+          cp Obracun-Windows.exe Obracun-Windows.exe.sha256 windows-package/
+          echo "Extract ZIP, then launch Obracun-Windows.exe" > windows-package/PROCITAJ.txt
+          (cd windows-package && zip -q -9 -r ../Obracun-Windows.zip .)
+      - name: Publish version to GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
+          test -n "$VERSION"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists"
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            Obracun-Windows.exe Obracun-Windows.exe.sha256 Obracun-Windows.zip \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "OBRAČUN v$VERSION" --generate-notes
