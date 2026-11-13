@@ -1,4 +1,4 @@
-# OBRAČUN – Windows v0.1.1
+# OBRAČUN – Windows v0.1.2
 
 ## Pokretanje na Windows 10 / 11 (64-bit)
 
@@ -20,13 +20,15 @@ Donji desni ugao → **Provjeri ažuriranja**. Aplikacija:
 - Provjerava SHA-256 sažetak, priprema zamjenu EXE i ponovo pokreće aplikaciju.
 - Ne briše korisnički Edge profil, obračune ni dokaznice pri updateu.
 
-**Važno:** GitHub repozitorij `keldin94/obracun-desktop` je aktivan. Preuzmi instalacijsku datoteku iz odjeljka Releases nakon uspješnog builda.
+Repozitorij `keldin94/obracun-desktop` je povezan. Nove verzije se objavljuju u GitHub Releases putem GitHub Actions. Ažuriranje ne briše podatke iz lokalnog Windows korisničkog profila. Prije prvog ažuriranja napravi backup kao dodatnu zaštitu.
 
 SHA-256 provjera štiti integritet preuzetog EXE, ali ne zamjenjuje digitalno potpisivanje binarne datoteke. Prije javne distribucije preporučeno je Windows code signing.
 
 ## Funkcije
 
-- Uvoz popisa `.xlsx`, `.xlsm`, `.csv`, ručno mapiranje kolona i dodavanje stavki.
+- Uvoz popisa `.xlsx`, `.xlsm`, `.csv`: označavanje više Excel listova, posebno mapiranje kolona za svaki list, korekcija izvornog reda/kolone po poziciji, pregled svih pozicija i izbor za uvoz.
+- Gradilišta: posebna baza i popis radova po gradilištu, podaci o lokaciji i naručiocu.
+- Prazan početni ekran; migracija uklanja samo originalne probne stavke, a uvezene korisničke postavke ostaju sačuvane.
 - Obračunski listovi po postavci: formula, period, lokacija, historija, kumulativne količine.
 - Dokaznice povezane sa postavkama: PDF / JPG / PNG / WebP.
 - Ispis mjesečne knjige na PDF kroz Windows printer `Save as PDF` / `Spremi kao PDF`.
@@ -46,7 +48,7 @@ go build -trimpath -ldflags="-s -w -H=windowsgui" -o Obracun-Windows.exe .
 Get-FileHash .\Obracun-Windows.exe -Algorithm SHA256
 ```
 
-Prije naredne objave promijeni `appVersion` u `main.go` i verziju u `app/desktop.js` / `app/index.html` (npr. `0.1.2`). Nakon izrade objavi `Obracun-Windows.exe` i tekstualni SHA256 fajl sa sadržajem `HASH  Obracun-Windows.exe` u GitHub Releases s tagom `v0.1.2`.
+Prije naredne objave promijeni `appVersion` u `main.go` i verziju u `app/desktop.js` / `app/index.html` (npr. `0.1.3`). Nakon izrade objavi `Obracun-Windows.exe` i tekstualni SHA256 fajl sa sadržajem `HASH  Obracun-Windows.exe` u GitHub Releases s tagom `v0.1.3`.
 
 Aplikacija koristi jednu HTML/JS osnovu; za iOS, iPadOS, Android i macOS u narednim fazama može se koristiti drugi, prilagođen aplikacijski omotač, uz zadržavanje modela obračuna i UI-ja.
 
@@ -54,21 +56,14 @@ Aplikacija koristi jednu HTML/JS osnovu; za iOS, iPadOS, Android i macOS u nared
 
 `.github/workflows/windows-release.yml` pokreće Go testove pri svakom pushu
 na `main`, gradi Windows x64 EXE, ZIP paket i SHA-256 datoteku. Ako nije objavljen GitHub
-Release s oznakom trenutne verzije (npr. `v0.1.1`), automatski ga objavljuje.
+Release s oznakom trenutne verzije (npr. `v0.1.2`), automatski ga objavljuje.
 Repozitorij mora imati uključen GitHub Actions i dozvolu `Read and write permissions`
 za workflow (Settings → Actions → General).
 
 Za novu verziju promijeni `appVersion` u `main.go` i tekst verzije u
-`app/desktop.js` (npr. na 0.1.2), testiraj pa pošalji izmjene u `main`.
+`app/desktop.js` (npr. na 0.1.3), testiraj pa pošalji izmjene u `main`.
 Release se tada automatski objavi, a korisnik vidi novu verziju pod
 **Provjeri ažuriranja**. Ne treba ručno postavljati EXE ni SHA-256 asset.
 
 Za produkcijsku distribuciju dodati test na stvarnom Windows računaru,
 digitalno potpisivanje i zaštitu procesa izdavanja.
-## GitHub
-
-Izvorni kod: https://github.com/keldin94/obracun-desktop
-
-Izdanje za preuzimanje: https://github.com/keldin94/obracun-desktop/releases/latest
-
-Ova prva verzija nije testirana na stvarnom Windows računaru. Prije stvarne upotrebe redovno izvoziti rezervne kopije obračuna.
