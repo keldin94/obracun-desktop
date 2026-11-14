@@ -482,6 +482,31 @@ func applyInstaller(installer, previousExecutable string) {
 	}
 }
 
+// Update Finder's app version after successfully replacing the executable.
+// User data lives in a separate browser profile and is never changed here.
+func updateMacBundleVersion(target string) {
+	contents := filepath.Dir(filepath.Dir(target))
+	plist := filepath.Join(contents, "Info.plist")
+	body, err := os.ReadFile(plist)
+	if err != nil {
+		logFile("macOS Info.plist: " + err.Error())
+		return
+	}
+	rx := regexp.MustCompile("(<key>CFBundle(?:ShortVersionString|Version)</key>\\s*<string>)[^<]+(</string>)")
+	changed := rx.ReplaceAllStringFunc(string(body), func(match string) string {
+		parts := rx.FindStringSubmatch(match)
+		if len(parts) != 3 {
+			return match
+		}
+		return parts[1] + appVersion + parts[2]
+	})
+	if changed != string(body) {
+		if err := os.WriteFile(plist, []byte(changed), 0644); err != nil {
+			logFile("macOS Info.plist update: " + err.Error())
+		}
+	}
+}
+
 func applyUpdate(target string) {
 	target, e := filepath.Abs(target)
 	if e != nil {
@@ -501,9 +526,16 @@ func applyUpdate(target string) {
 			_ = os.Remove(bak)
 			if e = os.Rename(target, bak); e == nil {
 				if e = os.Rename(staged, target); e == nil {
-					cmd := exec.Command(target)
-					if runtime.GOOS == "windows" {
-						setHiddenWindow(cmd)
+					var cmd *exec.Cmd
+					if runtime.GOOS == "darwin" {
+						updateMacBundleVersion(target)
+						bundle := filepath.Dir(filepath.Dir(filepath.Dir(target)))
+						cmd = exec.Command("open", "-a", bundle)
+					} else {
+						cmd = exec.Command(target)
+						if runtime.GOOS == "windows" {
+							setHiddenWindow(cmd)
+						}
 					}
 					if e = cmd.Start(); e != nil {
 						logFile("Novi program nije pokrenut: " + e.Error())
