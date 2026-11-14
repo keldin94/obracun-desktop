@@ -23,6 +23,11 @@ jobs:
         run: |
           go test ./...
           go vet ./...
+      - name: Validate multi-company cloud client
+        run: |
+          node --check app/cloud.js
+          python3 -m json.tool app/cloud-config.json >/dev/null
+          test -s supabase/002_organizations.sql
       - name: Generate app icons for both systems
         shell: bash
         run: |
@@ -93,4 +98,4 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.1.6: Nova navigacija Gradilišta, zajednička ikona, bez ponude za prevod i pripremljen Supabase cloud sync. Cloud postaje aktivan tek nakon primjene SQL šeme, unosa Supabase URL/publishable ključa i prijave istim nalogom na oba uređaja. Napravi backup prije sinhronizacije. Mac app nije Apple potpisan/notarizovan."
+            --notes "v0.2.0: Pripremljen jednostavan model Registracija → Firma → Korisnici i uloge, odvojeni podaci po firmi i gradilištu. Cloud NIJE aktivan dok se ne poveže zasebna Supabase baza i primijeni supabase/002_organizations.sql. Lokalna aplikacija i dalje radi. Backup prije prelaska. Mac app nije potpisan."

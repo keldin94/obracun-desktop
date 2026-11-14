@@ -1,4 +1,4 @@
-# OBRAČUN – Windows i macOS Intel v0.1.6
+# OBRAČUN – Windows i macOS Intel v0.2.0
 
 Desktop aplikacija za građevinske popise, obračunske listove i dokaznice. Jedan izvorni kod; dva paketa u istom GitHub izdanju.
 
@@ -51,3 +51,8 @@ Nema cloud sinhronizacije, digitalnih potpisa, MSI/DMG instalera, niti nativnog 
 Početni ekran su **Gradilišta**. Nakon odabira gradilišta lijevi meni prikazuje Pregled, Popis radova, Obračunske listove i Dokaznice za isto gradilište. Edge/Chrome prevod je potisnut HTML oznakom `notranslate` i pokretačkom opcijom. Mac aplikacija ima novu ikonu, a ikona aplikacijskog prozora dolazi iz istog SVG izvora na obje platforme.
 
 Windows .exe ikona je sada ugrađena pomoću pinovanog `akavel/rsrc v0.10.2` iz jedinstvenog SVG izvora. macOS .app koristi istu sliku za dock ikonu.
+
+
+## Model firmi i korisnika (v0.2.0)
+
+Pripremljen je novi sistem registracije, firmi, pozivnica, uloga i pristupa po gradilištu; pogledaj [cloud setup](docs/cloud-setup.md). Nema više unosa URL-a ili ključa po korisniku. **Cloud još nije aktiviran u izdanju bez povezanog Supabase projekta**: lokalna aplikacija ostaje funkcionalna. Za pravi zajednički rad potrebno je jednom aktivirati backend i testirati RLS, pa objaviti verziju s javnim (publishable) ključem. Nemoj unositi stvarne obračune u cloud prije provjera pristupa i backupa.
