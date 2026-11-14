@@ -23,33 +23,33 @@
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
   const platformLabel = navigator.platform.startsWith('Mac') ? 'macOS Intel' : 'Windows';
-  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b>v0.2.0</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b id="ob-active-version">v0.2.1</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';
   overlay.innerHTML=`<div id="ob-update-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-heading">
   <h2 id="ob-heading">Ažuriranja aplikacije</h2>
-  <p>Nova verzija se instalira direktno iz aplikacije. Obračuni i dokaznice ostaju u lokalnim podacima računara.</p>
-  <label for="ob-repo">GitHub repozitorij ažuriranja (vlasnik/naziv)</label><input id="ob-repo" autocomplete="off" spellcheck="false" placeholder="korisnik/obracun-desktop"/>
+  <p>OBRAČUN sam provjerava službena izdanja na GitHubu. Ne moraš ručno preuzimati niti mijenjati .exe datoteke.</p>
+
   <div id="ob-status" role="status">Provjeri dostupnost nove verzije.</div>
-  <div class="ob-note">Ažuriranje je dostupno kada GitHub objavi odgovarajuću datoteku za tvoj operativni sistem i njen SHA-256 kontrolni zbroj.</div>
-  <div class="ob-buttons"><button type="button" id="ob-close">Zatvori</button><button type="button" id="ob-save">Spremi postavku</button><button class="ob-primary" type="button" id="ob-check">Provjeri</button><button class="ob-green" type="button" id="ob-install" disabled>Instaliraj novu verziju</button></div>
+  <div class="ob-note">Windows ažuriranje instalira novu verziju u isti instalacijski folder. Mac aplikacija se ažurira u Applications. Podaci ostaju odvojeni od programa.</div>
+  <div class="ob-buttons"><button type="button" id="ob-close">Zatvori</button><button class="ob-primary" type="button" id="ob-check">Provjeri</button><button class="ob-green" type="button" id="ob-install" disabled>Instaliraj novu verziju</button></div>
   </div>`;
   document.body.appendChild(overlay);
   const by=id=>document.getElementById(id);
+  fetch('/api/health',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+    if(j?.version && by('ob-active-version'))by('ob-active-version').textContent='v'+j.version;
+  }).catch(()=>{});
   const status=m=>{by('ob-status').textContent=m};
-  const setBusy=b=>{for(const id of ['ob-check','ob-save'])by(id).disabled=b;by('ob-install').disabled=b || !available};
+  const setBusy=b=>{for(const id of ['ob-check'])by(id).disabled=b;by('ob-install').disabled=b || !available};
   let available=false,busy=false;
   async function api(path,opt){const r=await fetch('/api/update/'+path,{headers:{'Accept':'application/json','Content-Type':'application/json'},...opt});const j=await r.json();if(!r.ok)throw Error(j.error||'Greška pri provjeri.');return j;}
-  async function init(){try{const j=await api('settings');by('ob-repo').value=j.repo||'';}catch(e){status(e.message)}}
-  async function save(){if(busy)return;busy=true;setBusy(true);try{const j=await api('settings',{method:'POST',body:JSON.stringify({repo:by('ob-repo').value.trim()})});by('ob-repo').value=j.repo;status('Postavke su spremljene.');available=false;}catch(e){status(e.message)}finally{busy=false;setBusy(false)}}
   async function check(){if(busy)return;busy=true;available=false;setBusy(true);status('Provjeravam objavljene verzije…');try{
-    const repo=by('ob-repo').value.trim();await api('settings',{method:'POST',body:JSON.stringify({repo})});
     const j=await api('check');available=!!j.update;status(j.message+(j.version?'\nDostupno: '+j.version:''));
   }catch(e){status(e.message)}finally{busy=false;setBusy(false)}}
   async function install(){if(busy||!available)return;busy=true;setBusy(true);status('Preuzimam, provjeravam SHA-256 i pripremam instalaciju…');try{const j=await api('install',{method:'POST',body:'{}'});status(j.message+'\nProzor aplikacije će se ponovo otvoriti.');}catch(e){status('Ažuriranje nije uspjelo: '+e.message);busy=false;setBusy(false)}}
-  by('ob-open-update').onclick=()=>{overlay.classList.add('open');init()};
+  by('ob-open-update').onclick=()=>{overlay.classList.add('open');check()};
   by('ob-close').onclick=()=>overlay.classList.remove('open');
-  by('ob-save').onclick=save;by('ob-check').onclick=check;by('ob-install').onclick=install;
+  by('ob-check').onclick=check;by('ob-install').onclick=install;
   overlay.addEventListener('mousedown',e=>{if(e.target===overlay)overlay.classList.remove('open')});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')overlay.classList.remove('open')});
 })();
