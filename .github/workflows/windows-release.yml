@@ -126,7 +126,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.3.0: Grupisanje više vrsta radova na jednom Excel sheetu, izbacivanje nultih/opisnih pozicija, ručna i grupna klasifikacija, aneksi s historijom, tabelarni obračun dimenzija i odbitaka, lijepljenje skica Ctrl+V i A4 obračunski list sa skicama i potpisima. Izvoz pojedinačnog lista, više grupa ili svega za odabrani mjesec. Ažuriranje je u Postavkama. PDF dokaznice se zasad navode, nisu fizički spojene."
+            --notes "v0.3.1: Dopunjeni A4 listovi prema dostavljenom primjeru: obračunski načrt, stroškovno mesto, naručnik, izvođač i potpisnici; dodatno polje materijala u dimenzijskoj tabeli i provjera nepopunjenih dimenzija. Ostale funkcije v0.3.0 su zadržane. Ne zaboravi backup. PDF dokaznice nisu fizički spojene u jedan dokument."
 
   windows-installer-smoke:
     needs: desktop-release

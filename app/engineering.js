@@ -56,6 +56,10 @@ function groupForPosition({code='',name='',group='',fallback='Ostala dela',secti
   if(/zidanje|zidars/.test(desc))return 'Zidarska dela';
   return GROUPS.includes(fallback)?fallback:'Ostala dela';
 }
+function isValidRow(row){
+ const modes={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:['direct']};
+ return (modes[row.mode||'volume']||modes.volume).every(key=>/^[-+]?\d+(?:[.,]\d+)?$/.test(String(row[key]??'').trim()));
+}
 function calcRow(row){
  const mode=row.mode||'volume';const count=(row.kos===undefined||row.kos==='')?1:n(row.kos); const dims={a:n(row.a),b:n(row.b),c:n(row.c),h:n(row.h),d:n(row.d)};
  const templates={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:[]};
@@ -76,7 +80,7 @@ function mathExpression(rows){return (rows||[]).map(r=>{const c=calcRow(r);let e
 function renderEntryRow(e,unit){
  const rows=e.measurements||[];
  if(!rows.length)return `<tr><td>${esc(e.place||'')}</td><td>${esc(e.description||'')}</td><td colspan="7" class="formula-cell">${esc(e.expression||'')}</td><td class="right"><b>${num(e.quantity)} ${esc(unit)}</b></td></tr>`;
- return rows.map((r,j)=>{const c=calcRow(r);return `<tr><td>${esc(r.label||String.fromCharCode(65+j))}</td><td>${esc(e.place||e.description||'')}</td>`+
+ return rows.map((r,j)=>{const c=calcRow(r);return `<tr><td>${esc(r.label||String.fromCharCode(65+j))}</td><td>${esc(e.place||e.description||'')}${r.material?'<small class="muted">'+esc(r.material)+'</small>':''}</td>`+
    ['a','b','c','h','d'].map(k=>`<td class="right">${r[k]!==undefined&&r[k]!==''?esc(String(r[k])):'—'}</td>`).join('')+
    `<td class="right">${esc(String(r.kos||'1'))}</td><td class="formula-cell">${esc(c.expression)}</td><td class="right"><b>${num(c.result)} ${esc(unit)}</b></td></tr>`}).join('');
 }
@@ -131,12 +135,13 @@ async function buildReport({project,items,entries,proofs,month,groups,selectedId
   const annex=it.origin==='annex'||it.annexName?`<div class="annex">Aneks / dodatna dela: ${esc(it.annexName||'Dodatno delo')}</div>`:'';
   pages+=`<section class="page sheet">
    <div class="book-head">OBRAČUNSKI LIST št. ${i+1} &nbsp; · &nbsp; ${esc(dateLabel)}</div>
-   <table class="top-grid"><tr><td style="width:25%"><span class="th">Objekt</span><strong>${esc(project.name)}</strong><span class="muted">${esc(project.location||'')}</span></td>
+   <table class="top-grid"><tr><td style="width:25%"><span class="th">Objekt</span><strong>${esc(project.name)}</strong><span class="muted">${esc(project.location||'')}</span><div class="muted">Obračunski načrt: ${esc(project.planRef||'—')}</div></td>
     <td style="width:51%"><span class="th">Opis del – Postavka</span><strong>${esc(it.code)} ${esc(it.name)}</strong>${annex}</td>
-    <td style="width:24%"><span class="th">Predračunska postavka</span><strong>${esc(it.group)}</strong><span>${esc(it.code)}</span></td></tr></table>
+    <td style="width:24%"><span class="th">Predračunska postavka</span><strong>${esc(it.group)}</strong><span>${esc(it.code)}</span><div class="muted">Stroškovno mesto: ${esc(project.costCenter||'—')}</div></td></tr></table>
    <table class="account-bar"><tr><td><small>Priloga</small>${attachments.length} priloga</td><td><small>Enota mere</small><b>${esc(it.unit)}</b></td>
      <td><small>Predračunska količina</small><b>${num(it.contractQty)} ${esc(it.unit)}</b></td><td><small>Cena na enoto</small><b>${money(it.unitPrice)}</b></td>
      <td><small>Obračunska količina – mesečna</small><b>${num(value)} ${esc(it.unit)}</b></td><td><small>Skupna</small><b>${num(cumul)} ${esc(it.unit)}</b></td></tr></table>
+   <div class="muted" style="font-size:8px;margin-top:3px">Naročnik: ${esc(project.client||"—")} &nbsp; | &nbsp; Izvajalec: ${esc(project.contractor||"—")}</div>
    <div class="sec-head"><span>Skice, izmere, izračuni</span><span>${esc(dateLabel)} · Prenos: ${num(before)} ${esc(it.unit)}</span></div>
    <table class="measure"><thead><tr><th style="width:7%">Poz.</th><th style="width:18%">Opis / lokacija</th><th>a (m)</th><th>b (m)</th><th>c (m)</th><th>h (m)</th><th>d (m)</th><th>kos</th><th style="width:24%">Izračun</th><th style="width:13%">Količina</th></tr></thead>
     <tbody>${tableRows||'<tr><td colspan="10">Za izabrani mjesec nema obračunskih unosa</td></tr>'}</tbody></table>
@@ -144,9 +149,9 @@ async function buildReport({project,items,entries,proofs,month,groups,selectedId
    ${imageHTML?`<div class="sec-head">Skice in dokaznice</div><div class="proofs">${imageHTML}</div>`:''}
    ${remaining.length?`<div class="attachments"><em>PDF prilozi (nisu fizički spojeni u ispis):</em> ${esc(remaining.join(', '))}</div>`:''}
    <div class="spacer"></div><div class="foot-total">SKUPAJ: &nbsp; ${num(value)} ${esc(it.unit)}</div>
-   <div class="signatures"><div class="signature"><div>Sestavil</div><div class="line"></div><small>(ime in priimek, podpis)</small></div>
-   <div class="signature"><div>NAROČNIK:<div class="sub">pooblaščenec</div></div><div class="line"></div><small>(ime in priimek, podpis)</small></div>
-   <div class="signature"><div>IZVAJALEC:<div class="sub">odgovorni vodja del</div></div><div class="line"></div><small>(ime in priimek, podpis)</small></div></div></section>`;
+   <div class="signatures"><div class="signature"><div>Sestavil</div><div class="line">${esc(project.preparedBy||"")}</div><small>(ime in priimek, podpis)</small></div>
+   <div class="signature"><div>NAROČNIK:<div class="sub">pooblaščenec</div></div><div class="line">${esc(project.clientRepresentative||"")}</div><small>(ime in priimek, podpis)</small></div>
+   <div class="signature"><div>IZVAJALEC:<div class="sub">odgovorni vodja del</div></div><div class="line">${esc(project.contractorManager||"")}</div><small>(ime in priimek, podpis)</small></div></div></section>`;
  }
  let cover='';if(includeSummary){cover=`<section class="page cover"><h1>KNJIGA OBRAČUNSKIH IZMER</h1><h2>${esc(project.name)}</h2><p>${esc(project.location||'')}</p><p class="period">${esc(dateLabel)}</p>
   <p>Odabrani radovi: ${esc(groupSet.size?[...groupSet].join(', '):'Sve grupe')} · ${selected.length} postavki</p>
@@ -154,5 +159,5 @@ async function buildReport({project,items,entries,proofs,month,groups,selectedId
   <h2>UKUPNO ZA MJESEC: ${money(total)}</h2><div class="spacer"></div><p class="muted">Obračunski period: ${esc(dateLabel)}. Izmjere su računane punom preciznošću, na ispisu zaokružene na dvije decimale.</p></section>`}
  return '<!doctype html><html lang="sl"><head><meta charset="utf-8">'+css+'</head><body>'+cover+pages+'</body></html>';
 }
-window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,calcRow,calcRows,mathExpression,buildReport};
+window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,isValidRow,calcRow,calcRows,mathExpression,buildReport};
 })();

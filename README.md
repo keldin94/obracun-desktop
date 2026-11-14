@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.0 — Windows i macOS Intel
+# OBRAČUN v0.3.1 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -58,3 +58,6 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 - **Ograničenje:** PNG/JPG slike su umetnute u ispis; dodatni PDF dokumenti su trenutno popisani, ne fizički spojeni s ispisom.
 - Ažuriranja su premještena u **Postavke i backup → Provjeri ažuriranja**.
 - Prije prvog nadograđivanja napravi backup. Stari obračuni ostaju sačuvani.
+
+### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
+U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
