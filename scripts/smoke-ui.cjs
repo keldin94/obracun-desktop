@@ -4,7 +4,7 @@ const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
 
 (async () => {
- const server=spawn('go',['run','.'],{
+ const server=spawn('./smoke-server',[],{
    env:{...process.env,OBRACUN_TEST_NO_WINDOW:'1'},
    stdio:['ignore','pipe','pipe']
  });
