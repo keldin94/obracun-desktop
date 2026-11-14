@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.2 — Windows i macOS Intel
+# OBRAČUN v0.3.3 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -62,5 +62,15 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 ### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
 U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
 
-### Fix v0.3.2 — white startup screen
+### Fix v0.3.3 — white startup screen
 React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at build time and served offline. The old embedded React 16 libraries (without hooks) were removed. GitHub Actions now runs a real Chromium UI smoke test before publishing an installer. To build from source, run `npm install && npm run build:runtime && go test ./... && go build .`. Existing user data stays in the same profile.
+
+## v0.3.3 — Slobodni obračunski izrazi i izgled lista
+
+- Slobodne formule po redu koriste simbole a,b,c,h,d,q,r,t,kos i dodatna slova s vrijednostima; znak x ili * označava množenje, a zagrade određuju redoslijed. Podržani su +,−,×,÷; izračun se čuva punom preciznošću.
+- Posebno polje **Pozicije armature** ostaje uz izmjeru i ispisuje se u proračunu.
+- U editoru postavke su **Opombe**, ispisane pod Opis del – Postavka.
+- U **Postavke i backup** upiši naziv firme; koristi se kao Izvajalec ako za gradilište nije određen drugi izvođač.
+- Dokaznice imaju slobodan naziv, rotaciju po stepenu i izbor veličine na papiru. Slike se rotiraju u canvasu pri ispisu, bez ručnog uređivanja izvornog nacrta.
+- Na svakom listu su **Mesečna** (tekući mjesec) i **Skupna** (prethodno + tekući) desne kolone; PDF prikaz ostaje optimiziran za A4.
+- Ako ima mnogo priloga/dimenzija, ispis može zahtijevati dodatnu stranicu kako bi sve ostalo čitljivo.

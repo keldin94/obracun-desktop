@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: obracun-release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   desktop-release:
     runs-on: ubuntu-24.04
@@ -145,7 +149,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.3.2: Ispravljen bijeli ekran na Windowsu i Macu. React 16 iz starih HTML skripti zamijenjen je lokalno pakiranim React 18 i ikonama. Dodan obavezni preglednik-test koji pokreće aplikaciju, otvara Gradilišta i testira klik. Sačuvani podaci i sve funkcije iz v0.3.1 ostaju."
+            --notes "v0.3.3: Slobodne formule koriste dimenzije a,b,c,h,d,q,r,t,kos i dodatne varijable; opombe ispod postavke, oznake armature, naziv firme, dokazi s naslovom i proizvoljnom rotacijom/veličinom. A4 list s uspravnim Mesečna/Skupna kolonama. Obračuni se čuvaju u korisničkom profilu. Backup prije prve provjere."
 
   windows-installer-smoke:
     needs: desktop-release
