@@ -350,25 +350,81 @@ const pages = [{ id: 'sites', name: 'Gradilišta', icon: HardHat }, { id: 'pregl
 function MeasurementRows({form,setForm,unit}){
  const h=React.createElement,E=window.OBR_ENGINEERING;
  const rows=Array.isArray(form.measurements)?form.measurements:[];
- const update=(next)=>setForm({...form,measurements:next,expression:E.mathExpression(next)});
+ const update=next=>setForm({...form,measurements:next,expression:E.mathExpression(next)});
  const change=(ix,key,value)=>update(rows.map((r,i)=>i===ix?{...r,[key]:value}:r));
- const add=()=>update([...rows,{label:String.fromCharCode(65+rows.length),mode:unit==='m³'?'volume':unit==='m²'?'area':unit==='kg'||unit==='cm'?'weight':unit==='kos'?'pieces':'length',sign:'+',kos:'1',a:'',b:'',c:'',h:'',d:'',openings:'',material:''}]);
- const field=(r,i,key,label,width='65px')=>h('label',{key,className:'measure-field',style:{minWidth:width}},h('small',null,label),h('input',{value:r[key]||'',placeholder:'—',inputMode:'decimal',onChange:e=>change(i,key,e.target.value)}));
+ const extraChange=(ix,previous,next,value)=>{
+  update(rows.map((r,i)=>{
+   if(i!==ix)return r;
+   const extras={...(r.extraVariables||{})};
+   delete extras[previous];
+   if(next)extras[next]=value;
+   return {...r,extraVariables:extras};
+  }));
+ };
+ const add=()=>update([...rows,{label:String.fromCharCode(65+rows.length),mode:unit==='m³'?'volume':unit==='m²'?'area':unit==='kg'||unit==='cm'?'weight':unit==='kos'?'pieces':'length',sign:'+',kos:'1',a:'',b:'',c:'',h:'',d:'',q:'',r:'',t:'',openings:'',material:'',rebarPositions:'',formula:'',extraVariables:{}}]);
+ const addExtra=ix=>update(rows.map((r,i)=>{
+  if(i!==ix)return r;
+  const extras={...(r.extraVariables||{})};
+  const letters='efgijklmnopsuvwyz';
+  const key=[...letters].find(k=>!Object.hasOwn(extras,k)&&!Object.hasOwn(r,k));
+  if(key)extras[key]='';
+  return {...r,extraVariables:extras};
+ }));
+ const field=(r,i,key,label,width='65px',numeric=true)=>h('label',{key,className:'measure-field',style:{minWidth:width}},
+   h('small',null,label),
+   h('input',{value:r[key]??'',placeholder:'—',inputMode:numeric?'decimal':'text',onChange:e=>change(i,key,e.target.value)}));
  return h('section',{className:'measure-builder'},
-   h('div',{className:'measure-builder-head'},h('b',null,'Dimenzijski obračun'),h('button',{type:'button',className:'btn btn-outline',onClick:add},'+ Dodaj red')),
-   h('p',{style:{fontSize:'11px',color:'#789',margin:'6px 0 10px'}},'Uključi samo dimenzije koje stvarno koristiš. Svaki red automatski izračuna količinu i formulu; znak − koristi se za otvore i odbitke.'),
-   rows.map((r,i)=>h('div',{className:'measure-line',key:i},
-     h('div',{className:'measure-line-top'},
-       field(r,i,'label','Poz.','55px'),
-       h('label',{className:'measure-field',style:{flex:1}},h('small',null,'Formula'),h('select',{value:r.mode||'volume',onChange:e=>change(i,'mode',e.target.value)},
-         ...[['volume','a × b × h × kos'],['cubic','a × b × c × kos'],['area','a × b × kos'],['wall','a × h × kos'],['thickness','a × b × d × kos'],['length','a × kos'],['weight','a × kos (kg/cm)'],['pieces','kos'],['manual','Ručno upisana količina']].map(([v,label])=>h('option',{key:v,value:v},label)))),
-       h('label',{className:'measure-field'},h('small',null,'+/−'),h('select',{value:r.sign||'+',onChange:e=>change(i,'sign',e.target.value)},h('option',{value:'+'},'+ plus'),h('option',{value:'-'},'− odbitak'))),
-       h('button',{type:'button',title:'Ukloni red',className:'btn btn-outline measure-remove',onClick:()=>update(rows.filter((_,j)=>j!==i))},'×')),
-     h('div',{className:'measure-line-dims'},field(r,i,'a','a (m)'),field(r,i,'b','b (m)'),field(r,i,'c','c (m)'),field(r,i,'h','h (m)'),field(r,i,'d','d (m)'),field(r,i,'kos','Kos'),field(r,i,'material','Beton / material','110px'),field(r,i,'openings','Odbitak'),r.mode==='manual'&&field(r,i,'direct','Količina')),
-     h('div',{className:'measure-line-result'},h('code',null,E.calcRow(r).expression),h('strong',null,E.num(E.calcRow(r).result,3)+' '+unit))
-   )),
-   rows.length>0&&h('div',{className:'measure-total'},h('span',null,'UKUPNO za ovu izmjeru'),h('strong',null,E.num(E.calcRows(rows),3)+' '+unit)),
-   rows.length>0&&h('button',{type:'button',className:'text-action',onClick:()=>update([])},'Vrati ručni unos izraza')
+  h('div',{className:'measure-builder-head'},h('b',null,'Dimenzijski obračun'),h('button',{type:'button',className:'btn btn-outline',onClick:add},'+ Dodaj red')),
+  h('p',{style:{fontSize:11,color:'#64748b',margin:'6px 0 10px'}},
+    'Dimenzije unosiš samo jednom. U slobodnoj formuli koristi a, b, c, h, d, q, r, t, kos i dodatne varijable. Znak x ili * znači množenje.'),
+  rows.map((r,i)=>{
+   const result=E.calcRow(r),valid=E.isValidRow(r);
+   return h('div',{className:'measure-line',key:i},
+    h('div',{className:'measure-line-top'},
+     field(r,i,'label','Poz.','55px',false),
+     h('label',{className:'measure-field',style:{flex:1}},h('small',null,'Standardni način obračuna'),
+      h('select',{value:r.mode||'volume',onChange:e=>change(i,'mode',e.target.value)},
+       ...[['volume','a × b × h × kos'],['cubic','a × b × c × kos'],['area','a × b × kos'],
+         ['wall','a × h × kos'],['thickness','a × b × d × kos'],['length','a × kos'],
+         ['weight','a × kos (kg/cm)'],['pieces','kos'],['manual','Ručno upisana količina']
+       ].map(([v,label])=>h('option',{key:v,value:v},label)))),
+     h('label',{className:'measure-field'},h('small',null,'+/−'),
+      h('select',{value:r.sign||'+',onChange:e=>change(i,'sign',e.target.value)},
+       h('option',{value:'+'},'+ plus'),h('option',{value:'-'},'− odbitak'))),
+     h('button',{type:'button',title:'Ukloni red',className:'btn btn-outline measure-remove',
+       onClick:()=>update(rows.filter((_,j)=>j!==i))},'×')),
+    h('div',{className:'measure-line-dims'},
+     ...['a','b','c','h','d','q','r','t'].map(k=>field(r,i,k,k+' (m)')),
+     field(r,i,'kos','Kos'),
+     field(r,i,'material','Beton / material','120px',false),
+     field(r,i,'openings','Odbitak'),
+     r.mode==='manual'&&field(r,i,'direct','Količina'),
+     field(r,i,'rebarPositions','Pozicije armature','170px',false)),
+    h('div',{style:{border:'1px dashed #cbd5e1',padding:'9px 10px',borderRadius:8,marginTop:8,background:'#fbfdff'}},
+     h('label',{className:'measure-field'},h('small',null,'Slobodna formula (ima prednost nad standardnim načinom)'),
+      h('input',{value:r.formula||'',onChange:e=>change(i,'formula',e.target.value),
+       placeholder:'Primjer: a*(b+c)*2kos - q, ili (a-b)*h*kos',spellCheck:false,
+       style:{width:'100%',fontFamily:'monospace',marginTop:4,padding:'9px 11px',border:'1px solid #ced7e2',borderRadius:7}})),
+     h('div',{style:{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginTop:8}},
+       ...Object.entries(r.extraVariables||{}).map(([key,val])=>
+        h('label',{key,style:{display:'flex',alignItems:'center',gap:4}},
+         h('input',{value:key,title:'Naziv varijable',style:{width:50,padding:6,border:'1px solid #ccd6df',borderRadius:5},
+          onChange:e=>extraChange(i,key,e.target.value.replace(/[^a-z0-9_]/gi,'').toLowerCase(),val)}),
+         '=',
+         h('input',{value:val,inputMode:'decimal',placeholder:'vrijednost',style:{width:88,padding:6,border:'1px solid #ccd6df',borderRadius:5},
+          onChange:e=>extraChange(i,key,key,e.target.value)}),
+         h('button',{type:'button',title:'Ukloni varijablu',onClick:()=>extraChange(i,key,'',val)},'×'))),
+       h('button',{type:'button',className:'btn btn-outline',onClick:()=>addExtra(i)},'+ Varijabla'))),
+    h('div',{className:'measure-line-result'},
+     h('code',{style:{wordBreak:'break-word',whiteSpace:'normal'}},
+       valid?result.expression:(result.error||'Unesi potrebne dimenzije')),
+     h('strong',null,valid?E.num(result.result,3)+' '+unit:'— '+unit))
+   );
+  }),
+  rows.length>0&&h('div',{className:'measure-total'},
+   h('span',null,'UKUPNO za ovu izmjeru'),
+   h('strong',null,rows.every(E.isValidRow)?E.num(E.calcRows(rows),3)+' '+unit:'Provjeri formule')),
+  rows.length>0&&h('button',{type:'button',className:'text-action',onClick:()=>update([])},'Vrati ručni unos izraza')
  );
 }
 
