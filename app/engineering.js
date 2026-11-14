@@ -173,15 +173,16 @@ function renderEntryRow(e,unit){
    `<td class="right">${esc(String(r.kos||'1'))}</td><td class="formula-cell">${esc(c.expression)}${rowDetails(r)?'<div class="muted" style="font-size:7px;margin-top:2px">'+esc(rowDetails(r))+'</div>':''}</td><td class="right"><b>${num(c.result)} ${esc(unit)}</b></td></tr>`}).join('');
 }
 async function rotateImageData(dataUrl,degrees){
- const angle=((Math.round(Number(degrees)||0)%360)+360)%360;
- if(angle===0 || ![90,180,270].includes(angle) || typeof document==='undefined')return dataUrl;
+ const angle=((Number(degrees)||0)%360+360)%360;
+ if(angle===0 || typeof document==='undefined')return dataUrl;
  try{
   const image=new Image();
   await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=dataUrl;});
-  const swap=angle===90||angle===270;
+  const rad=angle*Math.PI/180;
+  const w=image.naturalWidth,h=image.naturalHeight;
   const canvas=document.createElement('canvas');
-  canvas.width=swap?image.naturalHeight:image.naturalWidth;
-  canvas.height=swap?image.naturalWidth:image.naturalHeight;
+  canvas.width=Math.ceil(Math.abs(w*Math.cos(rad))+Math.abs(h*Math.sin(rad)))+2;
+  canvas.height=Math.ceil(Math.abs(w*Math.sin(rad))+Math.abs(h*Math.cos(rad)))+2;
   if(canvas.width*canvas.height>18000000)throw Error('Image too large to rotate');
   const ctx=canvas.getContext('2d');
   ctx.translate(canvas.width/2,canvas.height/2);
