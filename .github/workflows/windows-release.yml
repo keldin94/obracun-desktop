@@ -48,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           google-chrome --version
+          go build -o smoke-server .
           node scripts/smoke-ui.cjs
       - name: Generate app icons for both systems
         shell: bash
