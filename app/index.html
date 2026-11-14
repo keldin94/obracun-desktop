@@ -381,7 +381,14 @@ function App() {
         const t = setTimeout(() => setToast(''), 4800);
         return () => clearTimeout(t);
     } }, [toast]);
-    const set = (update) => setState(old => ({ ...old, ...(typeof update === 'function' ? update(old) : update) }));
+    const set = (update) => setState(old => {
+        const next = { ...old, ...(typeof update === 'function' ? update(old) : update) };
+        if (window.OB_CLOUD?.authorizeChange && !window.OB_CLOUD.authorizeChange(old, next)) {
+            setToast('Nemaš dozvolu za izmjenu ovog gradilišta.');
+            return old;
+        }
+        return next;
+    });
     const projects = state.projects || [];
     const project = projects.find(p => p.id === state.selectedProject) || projects[0] || {id:null,name:'Odaberi gradilište',location:'',client:''};
     const month = state.selectedMonth || nowMonth();
@@ -590,7 +597,7 @@ function App() {
                 React.createElement("button", { className: "local-status cloud-entry", onClick:()=>window.OB_CLOUD?.open() },
                     React.createElement(CloudOff, { size: 17 }),
                     React.createElement("div", null,
-                        React.createElement("strong", null, cloudStatus.phase==='connected'?'Cloud povezan':'Cloud sinhronizacija'),
+                        React.createElement("strong", null, cloudStatus.phase==='connected'?'Cloud povezan':'Firma i korisnici'),
                         React.createElement("span", {title:cloudStatus.message}, (cloudStatus.message||'Poveži uređaje').slice(0,44)))),
                 React.createElement("button", { className: "side-settings", onClick: () => setModal('settings') },
                     React.createElement(Settings2, { size: 17 }),
@@ -1028,8 +1035,8 @@ function App() {
                             " Uvezi backup"))),
                 React.createElement("div", { className: "settings-warning" },
                     React.createElement(AlertCircle, { size: 18 }),
-                    React.createElement("span", null, "Podaci se prvo spremaju lokalno. Cloud sinhronizaciju aktiviraš nakon povezivanja svoje Supabase baze.")),
-                React.createElement("button",{className:"btn btn-outline",onClick:()=>{setModal(null);window.OB_CLOUD?.open();}},"Podesi cloud sinhronizaciju"))),
+                    React.createElement("span", null, "Podaci se spremaju lokalno. Nakon povezivanja centralne baze korisnici se samo registruju ili prijavljuju, bez unosa API ključeva.")),
+                React.createElement("button",{className:"btn btn-outline",onClick:()=>{setModal(null);window.OB_CLOUD?.open();}},"Firma i korisnici"))),
         toast && React.createElement("div", { className: "toast" },
             React.createElement(Info, { size: 18 }),
             toast,
