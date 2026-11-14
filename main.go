@@ -32,7 +32,7 @@ func updateAssetName() string {
 	if runtime.GOOS == "darwin" {
 		return "Obracun-macOS-Intel"
 	}
-	return executableAsset
+	return "Obracun-Setup-Windows.exe"
 }
 
 //go:embed app/index.html app/desktop.js app/cloud.js branding/obracun-icon.svg app/cloud-config.json
@@ -344,7 +344,12 @@ func (u *updater) install(w http.ResponseWriter, r *http.Request) {
 		fail(w, 422, "SHA-256 provjera nije prošla. Nova verzija nije instalirana.")
 		return
 	}
-	// Reject a mismatched platform executable before replacement.
+	// Validate the downloaded artifact for the current platform.
+	if runtime.GOOS == "windows" && (len(binary) < 2 || string(binary[:2]) != "MZ") {
+		fail(w, 422, "Preuzeta datoteka nije Windows installer. Ažuriranje je zaustavljeno.")
+		return
+	}
+
 	if runtime.GOOS == "darwin" && (len(binary) < 4 || binary[0] != 0xcf || binary[1] != 0xfa || binary[2] != 0xed || binary[3] != 0xfe) {
 		fail(w, 422, "Preuzeta datoteka nije macOS Intel program. Ažuriranje je zaustavljeno.")
 		return
@@ -369,13 +374,14 @@ func (u *updater) install(w http.ResponseWriter, r *http.Request) {
 		_ = probe.Close()
 		_ = os.Remove(probe.Name())
 	}
-	// A verified, platform-native executable replaces the old one after process exit.
+	// Preserve the old app and profile. Windows installs via the standard
+	// Start-menu installer; macOS replaces its app-bundle executable.
 	tempDir := filepath.Join(u.dir, "updates")
 	if e = os.MkdirAll(tempDir, 0700); e != nil {
 		fail(w, 500, e.Error())
 		return
 	}
-	pending := "Obracun-Pending.exe"
+	pending := "Obracun-Setup-Pending.exe"
 	if runtime.GOOS == "darwin" {
 		pending = "Obracun-Pending"
 	}
@@ -384,9 +390,19 @@ func (u *updater) install(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, "Ne mogu zapisati ažuriranje: "+e.Error())
 		return
 	}
-	cmd := exec.Command(newPath, "--apply-update", me)
+	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
+		// Run a copy of this executable as a detached helper, so the
+		// original executable is closed before the installer overwrites it.
+		helper := filepath.Join(tempDir, fmt.Sprintf("Obracun-Update-Helper-%d.exe", time.Now().UnixNano()))
+		if e = copyExecutable(me, helper); e != nil {
+			fail(w, 500, "Ne mogu pripremiti update helper: "+e.Error())
+			return
+		}
+		cmd = exec.Command(helper, "--apply-installer", newPath, me)
 		setHiddenWindow(cmd)
+	} else {
+		cmd = exec.Command(newPath, "--apply-update", me)
 	}
 	if e = cmd.Start(); e != nil {
 		fail(w, 500, "Ne mogu pokrenuti ažuriranje: "+e.Error())
@@ -424,6 +440,48 @@ func copyExecutable(from, to string) error {
 	}
 	return e
 }
+// applyInstaller runs from a temporary helper executable. The installer is
+// launched only once the previous local server has stopped.
+func applyInstaller(installer, previousExecutable string) {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	stopped := false
+	for attempt := 0; attempt < 100; attempt++ {
+		conn, err := net.DialTimeout("tcp", listenAddress, 200*time.Millisecond)
+		if err != nil {
+			stopped = true
+			break
+		}
+		_ = conn.Close()
+		time.Sleep(300 * time.Millisecond)
+	}
+	if !stopped {
+		logFile("Update instalacija otkazana: prethodna verzija je i dalje pokrenuta.")
+		return
+	}
+	cmd := exec.Command(installer, "/S")
+	setHiddenWindow(cmd)
+	if err := cmd.Run(); err != nil {
+		logFile("Windows installer nije uspio: " + err.Error())
+		return
+	}
+	// A previous portable copy is migrated to the persistent installed app.
+	installed := filepath.Join(os.Getenv("LOCALAPPDATA"), "Programs", "Obracun", "Obracun-Windows.exe")
+	if _, err := os.Stat(filepath.Join(filepath.Dir(previousExecutable), "Uninstall.exe")); err == nil {
+		installed = previousExecutable
+	}
+	if _, err := os.Stat(installed); err != nil {
+		logFile("Ažuriranje je završeno, ali instalirana aplikacija nije pronađena: " + err.Error())
+		return
+	}
+	cmd = exec.Command(installed)
+	setHiddenWindow(cmd)
+	if err := cmd.Start(); err != nil {
+		logFile("Ne mogu otvoriti instalirani OBRAČUN: " + err.Error())
+	}
+}
+
 func applyUpdate(target string) {
 	target, e := filepath.Abs(target)
 	if e != nil {
@@ -508,6 +566,10 @@ func openAppWindow() {
 	}
 }
 func main() {
+	if len(os.Args) >= 4 && os.Args[1] == "--apply-installer" {
+		applyInstaller(os.Args[2], os.Args[3])
+		return
+	}
 	if len(os.Args) >= 3 && os.Args[1] == "--apply-update" {
 		applyUpdate(os.Args[2])
 		return
