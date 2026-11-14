@@ -1,69 +1,41 @@
-# OBRAČUN – Windows v0.1.2
+# OBRAČUN – Windows i macOS Intel v0.1.4
 
-## Pokretanje na Windows 10 / 11 (64-bit)
+Desktop aplikacija za građevinske popise, obračunske listove i dokaznice. Jedan izvorni kod; dva paketa u istom GitHub izdanju.
 
-1. Preuzmi `Obracun-Windows.exe` i spremi ga u trajni folder, npr. `Dokumenti\Obracun`.
-2. Dvaput klikni EXE. Program otvara vlastiti prozor preko instaliranog Microsoft Edge preglednika (bez adresne trake i dodatnih kartica).
-3. Ne treba instalirati Node, Python ili drugi razvojni alat. Internet nije potreban za obračune; samo za provjeru ažuriranja.
-4. Podaci i prilozi ostaju u `%LOCALAPPDATA%\Keldin Obracun\BrowserProfile`, odvojeno od uobičajenog Edge profila i EXE datoteke.
-5. U aplikaciji koristi **Postavke i sigurnosna kopija → Izvezi backup** za dodatnu zaštitu podataka.
+## Windows (10/11, x64)
 
-Ovo je *prenosiva* (portable) EXE aplikacija, **nije MSI instalacijski paket**. Nije digitalno potpisana; Windows može prikazati upozorenje za nepoznatog izdavača. Nemoj ignorisati sigurnosna upozorenja ako ne vjeruješ porijeklu datoteke.
+Preuzmi `Obracun-Windows.exe` iz GitHub Releases. Spremi ga u trajni folder i pokreni. Koristi instalirani Microsoft Edge u zasebnom prozoru. Nije potreban dodatni softver niti internet za rad s lokalnim podacima.
 
-## Ažuriranja direktno iz aplikacije
+## macOS Intel (MacBook Pro 2016/2017, Intel i7)
 
-Donji desni ugao → **Provjeri ažuriranja**. Aplikacija:
+1. Preuzmi `Obracun-macOS-Intel.zip` iz GitHub Releases.
+2. Raspakuj i prevuci `Obracun.app` u `~/Applications` (preporučeno, jer ažuriranje zahtijeva pravo upisa u folder aplikacije). Alternativa je `/Applications` ako imaš dozvolu za izmjenu datoteka.
+3. Pokreni `Obracun.app`. Ako macOS blokira nepotpisanu aplikaciju, klikni desnim klikom > **Open** ili koristi **System Settings → Privacy & Security → Open Anyway**, samo ako vjeruješ izvoru.
+4. Za zaseban prozor bez adresne trake koristi Chrome / Microsoft Edge / Brave. Bez njih, aplikacija otvara macOS zadani preglednik (npr. Safari).
 
-- Preuzima podatke o najnovijem izdanju iz GitHub Releases.
-- Uspoređuje verzije (format `v0.1.2`, `v0.2.0` itd.).
-- Preuzima `Obracun-Windows.exe` i datoteku `Obracun-Windows.exe.sha256`.
-- Provjerava SHA-256 sažetak, priprema zamjenu EXE i ponovo pokreće aplikaciju.
-- Ne briše korisnički Edge profil, obračune ni dokaznice pri updateu.
+Pakirana aplikacija je Go server + lokalni UI preko browsera. Nije nativna SwiftUI aplikacija, ali je standardni `.app` paket za pokretanje iz Findera. Internet treba samo za preuzimanje i ažuriranje.
 
-Repozitorij `keldin94/obracun-desktop` je povezan. Nove verzije se objavljuju u GitHub Releases putem GitHub Actions. Ažuriranje ne briše podatke iz lokalnog Windows korisničkog profila. Prije prvog ažuriranja napravi backup kao dodatnu zaštitu.
+**Upozorenje:** `.app` nije digitalno potpisana niti Apple notarizovana. Nismo provjerili pokretanje na stvarnom macOS računaru; macOS Gatekeeper može blokirati izvršavanje. Bez Apple Developer ID certifikata nije moguća uobičajena notarizacija.
 
-SHA-256 provjera štiti integritet preuzetog EXE, ali ne zamjenjuje digitalno potpisivanje binarne datoteke. Prije javne distribucije preporučeno je Windows code signing.
+## Ažuriranja
 
-## Funkcije
+Unutar aplikacije izaberi **Provjeri ažuriranja**. Windows preuzima `Obracun-Windows.exe`, a macOS Intel `Obracun-macOS-Intel`. Obje datoteke se provjeravaju s odgovarajućim `.sha256` kontrolnim zbrojem iz GitHub Releases. Zamjena se izvršava iz pomoćnog procesa. Kod macOS-a aplikacija mora biti u folderu u koji korisnik može pisati; AppTranslocation / read-only lokacije su blokirane.
 
-- Uvoz popisa `.xlsx`, `.xlsm`, `.csv`: označavanje više Excel listova, posebno mapiranje kolona za svaki list, korekcija izvornog reda/kolone po poziciji, pregled svih pozicija i izbor za uvoz.
-- Gradilišta: posebna baza i popis radova po gradilištu, podaci o lokaciji i naručiocu.
-- Prazan početni ekran; migracija uklanja samo originalne probne stavke, a uvezene korisničke postavke ostaju sačuvane.
-- Obračunski listovi po postavci: formula, period, lokacija, historija, kumulativne količine.
-- Dokaznice povezane sa postavkama: PDF / JPG / PNG / WebP.
-- Ispis mjesečne knjige na PDF kroz Windows printer `Save as PDF` / `Spremi kao PDF`.
-- Backup i povrat JSON podataka iz aplikacije.
+SHA-256 štiti od slučajne korupcije, ali ne zamjenjuje potpisivanje izvoda i zaštitu objavljivanja verzija. Prije javne distribucije dodati potpisivanje i notarizaciju.
 
-**Trenutna ograničenja:** u ovoj prenosivoj verziji postojeći PDF prilozi su navedeni, ali nisu automatski fizički spojeni iza obračunskog PDF-a. Nema login sistema, cloud sinhronizacije, prava korisnika, niti zasebnog MSI instalera.
+## Lokalni podaci
 
-## Razvoj i izrada nove EXE verzije
+- Windows: `%LOCALAPPDATA%\Keldin Obracun\BrowserProfile` (Edge podaci i IndexedDB)
+- macOS Chrome/Edge/Brave: `~/Library/Application Support/Keldin Obracun/BrowserProfile` (na macOS Safari fallback koristi Safari podatke)
+- Podaci se ne sinhronizuju automatski između Windowsa i macOS-a.
+- Napravi backup unutar aplikacije prije prvog ažuriranja.
 
-Potreban Go 1.22+:
+## Izrada
 
-```powershell
-$env:GOOS="windows"
-$env:GOARCH="amd64"
-$env:CGO_ENABLED="0"
-go build -trimpath -ldflags="-s -w -H=windowsgui" -o Obracun-Windows.exe .
-Get-FileHash .\Obracun-Windows.exe -Algorithm SHA256
-```
+U repozitoriju `.github/workflows/windows-release.yml` kompajlira i testira Go program na GitHub Actions, izrađuje oba paketa i GitHub Release na novoj oznaci verzije. `GOOS=darwin GOARCH=amd64 CGO_ENABLED=0` generiše Mac Intel izvršni program; `Info.plist` se nalazi u `packaging/macos`.
 
-Prije naredne objave promijeni `appVersion` u `main.go` i verziju u `app/desktop.js` / `app/index.html` (npr. `0.1.3`). Nakon izrade objavi `Obracun-Windows.exe` i tekstualni SHA256 fajl sa sadržajem `HASH  Obracun-Windows.exe` u GitHub Releases s tagom `v0.1.3`.
+Za novu verziju promijeni `appVersion` u `main.go` i prikazanu verziju u `app/desktop.js`, pa pošalji izmjene u `main`. GitHub Action objavljuje zajedničko izdanje za oba sistema.
 
-Aplikacija koristi jednu HTML/JS osnovu; za iOS, iPadOS, Android i macOS u narednim fazama može se koristiti drugi, prilagođen aplikacijski omotač, uz zadržavanje modela obračuna i UI-ja.
+## Trenutna ograničenja
 
-## Automatska objava novih verzija na GitHubu
-
-`.github/workflows/windows-release.yml` pokreće Go testove pri svakom pushu
-na `main`, gradi Windows x64 EXE, ZIP paket i SHA-256 datoteku. Ako nije objavljen GitHub
-Release s oznakom trenutne verzije (npr. `v0.1.2`), automatski ga objavljuje.
-Repozitorij mora imati uključen GitHub Actions i dozvolu `Read and write permissions`
-za workflow (Settings → Actions → General).
-
-Za novu verziju promijeni `appVersion` u `main.go` i tekst verzije u
-`app/desktop.js` (npr. na 0.1.3), testiraj pa pošalji izmjene u `main`.
-Release se tada automatski objavi, a korisnik vidi novu verziju pod
-**Provjeri ažuriranja**. Ne treba ručno postavljati EXE ni SHA-256 asset.
-
-Za produkcijsku distribuciju dodati test na stvarnom Windows računaru,
-digitalno potpisivanje i zaštitu procesa izdavanja.
+Nema cloud sinhronizacije, digitalnih potpisa, MSI/DMG instalera, niti nativnog macOS WebKit prozora. PDF se sprema kroz dijalog za ispis. PDF dokaznice se navode, ali se još ne spajaju fizički u jedan PDF.

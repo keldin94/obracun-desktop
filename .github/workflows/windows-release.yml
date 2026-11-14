@@ -1,4 +1,4 @@
-name: Build and release Windows desktop app
+name: Build and release Windows + macOS Intel desktop app
 on:
   push:
     branches: [main]
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  windows-release:
+  desktop-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,19 +20,38 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Unit tests
-        run: go test ./...
-      - name: Build Windows executable
+        run: |
+          go test ./...
+          go vet ./...
+      - name: Build Windows x64
         shell: bash
         run: |
           set -euo pipefail
-          export GOOS=windows GOARCH=amd64 CGO_ENABLED=0
-          go build -trimpath -ldflags='-s -w -H=windowsgui' -o Obracun-Windows.exe .
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w -H=windowsgui' -o Obracun-Windows.exe .
           test -s Obracun-Windows.exe
           sha256sum Obracun-Windows.exe > Obracun-Windows.exe.sha256
           mkdir -p windows-package
           cp Obracun-Windows.exe Obracun-Windows.exe.sha256 windows-package/
-          echo "Extract ZIP, then launch Obracun-Windows.exe" > windows-package/PROCITAJ.txt
+          echo 'Extract ZIP and launch Obracun-Windows.exe' > windows-package/PROCITAJ.txt
           (cd windows-package && zip -q -9 -r ../Obracun-Windows.zip .)
+      - name: Build and package macOS Intel app
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
+          test -n "$VERSION"
+          mkdir -p Obracun.app/Contents/MacOS
+          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o Obracun.app/Contents/MacOS/Obracun .
+          test -s Obracun.app/Contents/MacOS/Obracun
+          file Obracun.app/Contents/MacOS/Obracun | grep -q 'Mach-O 64-bit x86_64'
+          chmod 755 Obracun.app/Contents/MacOS/Obracun
+          sed "s/__APP_VERSION__/$VERSION/g" packaging/macos/Info.plist > Obracun.app/Contents/Info.plist
+          printf 'APPL????' > Obracun.app/Contents/PkgInfo
+          cp Obracun.app/Contents/MacOS/Obracun Obracun-macOS-Intel
+          sha256sum Obracun-macOS-Intel > Obracun-macOS-Intel.sha256
+          cp packaging/macos/INSTALACIJA_MAC.txt .
+          zip -q -9 -r -y Obracun-macOS-Intel.zip Obracun.app INSTALACIJA_MAC.txt
+          unzip -tq Obracun-macOS-Intel.zip
       - name: Publish version to GitHub Releases
         shell: bash
         env:
@@ -42,10 +61,12 @@ jobs:
           VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
           test -n "$VERSION"
           if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release v$VERSION already exists"
+            echo "Release v$VERSION already exists; no assets overwritten"
             exit 0
           fi
           gh release create "v$VERSION" \
             Obracun-Windows.exe Obracun-Windows.exe.sha256 Obracun-Windows.zip \
+            Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "OBRAČUN v$VERSION" --generate-notes
+            --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
+            --notes "Windows: preuzmi Obracun-Windows.exe. macOS Intel: preuzmi Obracun-macOS-Intel.zip, raspakuj i prebaci Obracun.app u ~/Applications. Mac aplikacija nije Apple potpisana ni notarizovana. Oba sistema imaju odvojene lokalne podatke. Provjera ažuriranja podržava oba sistema."

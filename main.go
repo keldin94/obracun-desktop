@@ -22,11 +22,18 @@ import (
 )
 
 const (
-	appVersion      = "0.1.3"
+	appVersion      = "0.1.4"
 	listenAddress   = "127.0.0.1:17861"
 	defaultRepo     = "keldin94/obracun-desktop"
 	executableAsset = "Obracun-Windows.exe"
 )
+
+func updateAssetName() string {
+	if runtime.GOOS == "darwin" {
+		return "Obracun-macOS-Intel"
+	}
+	return executableAsset
+}
 
 //go:embed app/index.html app/desktop.js
 var assets embed.FS
@@ -232,15 +239,15 @@ func (u *updater) releaseInfo(ctx context.Context) (updateDetails, error) {
 	ud := updateDetails{Tag: rel.TagName, Exists: versionIsNewer(rel.TagName)}
 	for _, a := range rel.Assets {
 		switch a.Name {
-		case executableAsset:
+		case updateAssetName():
 			ud.BinaryURL = a.URL
 			ud.Size = a.Size
-		case executableAsset + ".sha256":
+		case updateAssetName() + ".sha256":
 			ud.DigestURL = a.URL
 		}
 	}
 	if ud.Exists && (ud.BinaryURL == "" || ud.DigestURL == "") {
-		return updateDetails{}, errors.New("Nova verzija nema potrebne EXE i SHA-256 datoteke. Instalacija je blokirana.")
+		return updateDetails{}, errors.New("Nova verzija nema izvršnu datoteku za ovaj sistem i SHA-256 kontrolni zbroj. Instalacija je blokirana.")
 	}
 	if ud.Exists && (ud.Size < 1 || ud.Size > 120*1024*1024) {
 		return updateDetails{}, errors.New("Neispravna veličina datoteke ažuriranja.")
@@ -337,18 +344,42 @@ func (u *updater) install(w http.ResponseWriter, r *http.Request) {
 		fail(w, 422, "SHA-256 provjera nije prošla. Nova verzija nije instalirana.")
 		return
 	}
+	// Reject a mismatched platform executable before replacement.
+	if runtime.GOOS == "darwin" && (len(binary) < 4 || binary[0] != 0xcf || binary[1] != 0xfa || binary[2] != 0xed || binary[3] != 0xfe) {
+		fail(w, 422, "Preuzeta datoteka nije macOS Intel program. Ažuriranje je zaustavljeno.")
+		return
+	}
 	me, e := os.Executable()
 	if e != nil {
 		fail(w, 500, e.Error())
 		return
 	}
-	// New exe launches itself as a replacement helper after the old process exits.
+	// macOS app bundles can be translocated or stored in a read-only folder.
+	if runtime.GOOS == "darwin" {
+		path := filepath.ToSlash(me)
+		if strings.Contains(path, "/AppTranslocation/") || !strings.Contains(path, ".app/Contents/MacOS/") {
+			fail(w, 409, "Premjesti Obracun.app u folder Applications (ili ~/Applications) i otvori ga odatle prije ažuriranja.")
+			return
+		}
+		probe, pe := os.CreateTemp(filepath.Dir(me), ".obracun-permission-test-*")
+		if pe != nil {
+			fail(w, 403, "Aplikacija nema dozvolu za izmjene na ovom mjestu. Premjesti Obracun.app u ~/Applications pa ponovi ažuriranje.")
+			return
+		}
+		_ = probe.Close()
+		_ = os.Remove(probe.Name())
+	}
+	// A verified, platform-native executable replaces the old one after process exit.
 	tempDir := filepath.Join(u.dir, "updates")
 	if e = os.MkdirAll(tempDir, 0700); e != nil {
 		fail(w, 500, e.Error())
 		return
 	}
-	newPath := filepath.Join(tempDir, "Obracun-Pending.exe")
+	pending := "Obracun-Pending.exe"
+	if runtime.GOOS == "darwin" {
+		pending = "Obracun-Pending"
+	}
+	newPath := filepath.Join(tempDir, pending)
 	if e = os.WriteFile(newPath, binary, 0700); e != nil {
 		fail(w, 500, "Ne mogu zapisati ažuriranje: "+e.Error())
 		return
@@ -417,7 +448,7 @@ func applyUpdate(target string) {
 						setHiddenWindow(cmd)
 					}
 					if e = cmd.Start(); e != nil {
-						logFile("Novi EXE nije pokrenut: " + e.Error())
+						logFile("Novi program nije pokrenut: " + e.Error())
 					}
 					return
 				}
@@ -440,6 +471,16 @@ func openAppWindow() {
 			}
 		}
 		candidates = append(candidates, "msedge.exe")
+	} else if runtime.GOOS == "darwin" {
+		home, _ := os.UserHomeDir()
+		// Chromium-based browsers open an app-style window with a separate persistent profile.
+		for _, dir := range []string{"/Applications", filepath.Join(home, "Applications")} {
+			candidates = append(candidates,
+				filepath.Join(dir, "Google Chrome.app", "Contents", "MacOS", "Google Chrome"),
+				filepath.Join(dir, "Microsoft Edge.app", "Contents", "MacOS", "Microsoft Edge"),
+				filepath.Join(dir, "Brave Browser.app", "Contents", "MacOS", "Brave Browser"),
+				filepath.Join(dir, "Chromium.app", "Contents", "MacOS", "Chromium"))
+		}
 	} else {
 		candidates = []string{"chromium", "google-chrome", "microsoft-edge"}
 	}
@@ -457,6 +498,8 @@ func openAppWindow() {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
+	} else if runtime.GOOS == "darwin" {
+		cmd = exec.Command("open", url)
 	} else {
 		cmd = exec.Command("xdg-open", url)
 	}

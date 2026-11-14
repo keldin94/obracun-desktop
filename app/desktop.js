@@ -22,7 +22,8 @@
   `;
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
-  widget.innerHTML='<span class="ob-version">OBRAČUN Windows <b>v0.1.3</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  const platformLabel = navigator.platform.startsWith('Mac') ? 'macOS Intel' : 'Windows';
+  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b>v0.1.4</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';
   overlay.innerHTML=`<div id="ob-update-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-heading">
@@ -30,7 +31,7 @@
   <p>Nova verzija se instalira direktno iz aplikacije. Obračuni i dokaznice ostaju u lokalnim podacima računara.</p>
   <label for="ob-repo">GitHub repozitorij ažuriranja (vlasnik/naziv)</label><input id="ob-repo" autocomplete="off" spellcheck="false" placeholder="korisnik/obracun-desktop"/>
   <div id="ob-status" role="status">Provjeri dostupnost nove verzije.</div>
-  <div class="ob-note">Ažuriranje će biti dostupno nakon što u navedeni GitHub repozitorij budu objavljeni EXE i SHA-256 datoteka.</div>
+  <div class="ob-note">Ažuriranje je dostupno kada GitHub objavi odgovarajuću datoteku za tvoj operativni sistem i njen SHA-256 kontrolni zbroj.</div>
   <div class="ob-buttons"><button type="button" id="ob-close">Zatvori</button><button type="button" id="ob-save">Spremi postavku</button><button class="ob-primary" type="button" id="ob-check">Provjeri</button><button class="ob-green" type="button" id="ob-install" disabled>Instaliraj novu verziju</button></div>
   </div>`;
   document.body.appendChild(overlay);

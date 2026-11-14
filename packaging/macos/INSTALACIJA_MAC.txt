@@ -1,0 +1,8 @@
+OBRAČUN macOS Intel v0.1.4
+1. Raspakuj ZIP.
+2. Prevuci Obracun.app u korisnički folder ~/Applications (ili Applications ako imaš dozvolu pisanja).
+3. Klikni desnim klikom na Obracun.app i izaberi Open. Ako macOS blokira aplikaciju, u System Settings > Privacy & Security provjeri opciju Open Anyway, samo ako vjeruješ porijeklu.
+4. Za zaseban app prozor preporučuje se Google Chrome ili Microsoft Edge. Bez njih, otvara se standardni preglednik.
+5. Podaci su lokalni; ne sinkronizuju se automatski s Windowsom. Prije prvog updatea napravi backup u aplikaciji.
+6. Provjeri ažuriranja je dostupno iz aplikacije. Za zamjenu aplikacija mora biti u folderu u koji možeš pisati (preporučeno ~/Applications).
+Napomena: aplikacija nije Apple digitalno potpisana niti notarizovana; macOS je može upozoriti ili blokirati.

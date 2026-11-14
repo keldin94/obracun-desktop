@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>bs</string>
+    <key>CFBundleExecutable</key><string>Obracun</string>
+    <key>CFBundleIdentifier</key><string>com.keldin.obracun</string>
+    <key>CFBundleName</key><string>OBRAČUN</string>
+    <key>CFBundleDisplayName</key><string>OBRAČUN</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>__APP_VERSION__</string>
+    <key>CFBundleVersion</key><string>__APP_VERSION__</string>
+    <key>LSMinimumSystemVersion</key><string>10.15</string>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
