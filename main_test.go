@@ -7,7 +7,7 @@ func TestVersionIsNewer(t *testing.T) {
 		tag   string
 		newer bool
 	}{
-		{"v0.1.1", false}, {"0.1.1", false}, {"v0.1.2", false}, {"v0.1.3", false}, {"v0.1.4", false}, {"v0.1.5", false}, {"v0.1.6", false}, {"v0.1.7", false}, {"v0.2.0", false}, {"v0.2.1", true}, {"v1.0.0", true},
+		{"v0.1.1", false}, {"0.1.1", false}, {"v0.1.2", false}, {"v0.1.3", false}, {"v0.1.4", false}, {"v0.1.5", false}, {"v0.1.6", false}, {"v0.1.7", false}, {"v0.2.0", false}, {"v0.2.1", false}, {"v0.2.2", true}, {"v1.0.0", true},
 		{"v0.1.0", false}, {"v0.0.99", false}, {"other", false}, {"v0.1.1-beta", false},
 	}
 	for _, tt := range cases {
@@ -28,7 +28,7 @@ func regexpRepoAdditionalReject(s string) bool {
 }
 func TestUpdateArtifactName(t *testing.T) {
 	name := updateAssetName()
-	if name != "Obracun-Windows.exe" && name != "Obracun-macOS-Intel" {
+	if name != "Obracun-Setup-Windows.exe" && name != "Obracun-macOS-Intel" {
 		t.Fatalf("unexpected asset name: %q", name)
 	}
 }
