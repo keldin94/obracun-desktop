@@ -2,6 +2,11 @@
 const {spawn} = require('node:child_process');
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
+const fs=require('node:fs');
+const goSource=fs.readFileSync('main.go','utf8');
+const expectedVersion=goSource.match(/appVersion\s*=\s*"([^"]+)"/)?.[1];
+if(!expectedVersion)throw Error('Version not found in main.go');
+
 
 (async () => {
  const server=spawn('./smoke-server',[],{
@@ -18,7 +23,7 @@ const assert = require('node:assert/strict');
      if(server.exitCode!==null)throw Error('Server terminated: '+logs);
      try {
        const r=await fetch('http://127.0.0.1:17861/api/health');
-       if(r.ok && (await r.json()).version==='0.3.2'){ready=true;break}
+       if(r.ok && (await r.json()).version===expectedVersion){ready=true;break}
      }catch{}
      await new Promise(resolve=>setTimeout(resolve,500));
    }
