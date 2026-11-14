@@ -673,9 +673,18 @@ func main() {
 			return
 		}
 		valid := res.Header.Get("X-Obracun-Instance") == "desktop"
+		var running struct {
+			Version string `json:"version"`
+		}
+		_ = json.NewDecoder(io.LimitReader(res.Body, 4096)).Decode(&running)
 		_ = res.Body.Close()
 		if !valid {
 			logFile("Port već koristi drugi program")
+			return
+		}
+		if running.Version != appVersion {
+			logFile("Druga verzija OBRAČUNA je već pokrenuta: " + running.Version)
+			showRunningVersionAlert(running.Version)
 			return
 		}
 		openAppWindow()
