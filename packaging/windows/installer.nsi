@@ -8,13 +8,13 @@ Unicode True
 !define APP_NAME "OBRAČUN"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\KeldinObracun"
 !define APP_REG_KEY "Software\Keldin\Obracun"
-!define MUI_ICON "branding/obracun-icon.ico"
-!define MUI_UNICON "branding/obracun-icon.ico"
+!define MUI_ICON "../../branding/obracun-icon.ico"
+!define MUI_UNICON "../../branding/obracun-icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\Obracun-Windows.exe"
 
 Name "${APP_NAME}"
-OutFile "Obracun-Setup-Windows.exe"
+OutFile "../../Obracun-Setup-Windows.exe"
 RequestExecutionLevel user
 InstallDir "$LOCALAPPDATA\Programs\Obracun"
 InstallDirRegKey HKCU "${APP_REG_KEY}" "Install_Dir"
@@ -41,7 +41,7 @@ Section "OBRAČUN (required)" SecProgram
   SectionIn RO
   SetOutPath "$INSTDIR"
   SetOverwrite on
-  File "Obracun-Windows.exe"
+  File "../../Obracun-Windows.exe"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\OBRAČUN"
   CreateShortcut "$SMPROGRAMS\OBRAČUN\OBRAČUN.lnk" "$INSTDIR\Obracun-Windows.exe" "" "$INSTDIR\Obracun-Windows.exe" 0
