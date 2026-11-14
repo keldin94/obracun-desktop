@@ -35,7 +35,7 @@ func updateAssetName() string {
 	return executableAsset
 }
 
-//go:embed app/index.html app/desktop.js app/cloud.js branding/obracun-icon.svg
+//go:embed app/index.html app/desktop.js app/cloud.js branding/obracun-icon.svg app/cloud-config.json
 var assets embed.FS
 
 type settings struct {
@@ -534,6 +534,21 @@ func main() {
 		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Write(b)
+	})
+	mux.HandleFunc("/api/cloud/config", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		b, e := assets.ReadFile("app/cloud-config.json")
+		if e != nil {
+			http.Error(w, "Cloud configuration unavailable", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		_, _ = w.Write(b)
 	})
 	mux.HandleFunc("/cloud.js", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := assets.ReadFile("app/cloud.js")
