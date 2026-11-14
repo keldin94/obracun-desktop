@@ -8,6 +8,7 @@
     <key>CFBundleName</key><string>OBRAČUN</string>
     <key>CFBundleDisplayName</key><string>OBRAČUN</string>
     <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleIconFile</key><string>Obracun.icns</string>
     <key>CFBundleShortVersionString</key><string>__APP_VERSION__</string>
     <key>CFBundleVersion</key><string>__APP_VERSION__</string>
     <key>LSMinimumSystemVersion</key><string>10.15</string>

@@ -23,6 +23,21 @@ jobs:
         run: |
           go test ./...
           go vet ./...
+      - name: Generate app icons for both systems
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet --disable-pip-version-check 'Pillow==11.3.0' 'CairoSVG==2.7.1'
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import cairosvg
+          out=Path('branding')
+          cairosvg.svg2png(url=str(out/'obracun-icon.svg'),write_to=str(out/'obracun-icon-1024.png'),output_width=1024,output_height=1024)
+          image=Image.open(out/'obracun-icon-1024.png').convert('RGBA')
+          image.save(out/'obracun-icon.ico',format='ICO',sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
+          image.save(out/'Obracun.icns',format='ICNS')
+          PY
       - name: Build Windows x64
         shell: bash
         run: |
@@ -40,7 +55,8 @@ jobs:
           set -euo pipefail
           VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
           test -n "$VERSION"
-          mkdir -p Obracun.app/Contents/MacOS
+          mkdir -p Obracun.app/Contents/MacOS Obracun.app/Contents/Resources
+          cp branding/Obracun.icns Obracun.app/Contents/Resources/Obracun.icns
           GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o Obracun.app/Contents/MacOS/Obracun .
           test -s Obracun.app/Contents/MacOS/Obracun
           file Obracun.app/Contents/MacOS/Obracun | grep -q 'Mach-O 64-bit x86_64'
@@ -69,4 +85,4 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "Windows: preuzmi Obracun-Windows.exe. macOS Intel: preuzmi Obracun-macOS-Intel.zip, raspakuj i prebaci Obracun.app u ~/Applications. Mac aplikacija nije Apple potpisana ni notarizovana. Oba sistema imaju odvojene lokalne podatke. Provjera ažuriranja podržava oba sistema."
+            --notes "v0.1.5: Nova navigacija Gradilišta, zajednička ikona, bez ponude za prevod i pripremljen Supabase cloud sync. Cloud postaje aktivan tek nakon primjene SQL šeme, unosa Supabase URL/publishable ključa i prijave istim nalogom na oba uređaja. Napravi backup prije sinhronizacije. Mac app nije Apple potpisan/notarizovan."

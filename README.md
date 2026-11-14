@@ -1,4 +1,4 @@
-# OBRAČUN – Windows i macOS Intel v0.1.4
+# OBRAČUN – Windows i macOS Intel v0.1.5
 
 Desktop aplikacija za građevinske popise, obračunske listove i dokaznice. Jedan izvorni kod; dva paketa u istom GitHub izdanju.
 
@@ -39,3 +39,13 @@ Za novu verziju promijeni `appVersion` u `main.go` i prikazanu verziju u `app/de
 ## Trenutna ograničenja
 
 Nema cloud sinhronizacije, digitalnih potpisa, MSI/DMG instalera, niti nativnog macOS WebKit prozora. PDF se sprema kroz dijalog za ispis. PDF dokaznice se navode, ali se još ne spajaju fizički u jedan PDF.
+
+## Cloud sinhronizacija (v0.1.5)
+
+**Cloud nije uključen automatski.** Odaberi Supabase projekt (možeš koristiti postojeći, ali posebne tabele za OBRAČUN), pokreni `supabase/001_obracun_sync.sql` u njegovom SQL Editoru, te kopiraj **Project URL** i isključivo **publishable/anon ključ** (nikada service_role ili tajni ključ). U OBRAČUN aplikaciji klikni **Cloud sinhronizacija**, sačuvaj URL/ključ, registruj se ili prijavi, pa na prvom računaru odaberi **Pošalji lokalne podatke**. Na drugom računaru prijavi se istim e-mailom i lozinkom: ako su tamo podaci prazni automatski će se preuzeti. Ako nisu, aplikacija upozorava na sukob i traži ručni izbor. Nakon prve uspješne veze, izmjene se provjeravaju automatski. Dokaznice idu u privatni Supabase Storage bucket.
+
+**Sigurnost:** Podaci se prvo čuvaju lokalno i RLS ograničava pristup vlastitom korisničkom nalogu. Provjeri backup prije prve sinhronizacije; ne koristi dugme *Pošalji lokalne podatke* za prepisivanje novijih cloud izmjena. Ovo je probna implementacija i zahtijeva test na dva stvarna uređaja prije korištenja za važne podatke.
+
+## Navigacija i ikonice
+
+Početni ekran su **Gradilišta**. Nakon odabira gradilišta lijevi meni prikazuje Pregled, Popis radova, Obračunske listove i Dokaznice za isto gradilište. Edge/Chrome prevod je potisnut HTML oznakom `notranslate` i pokretačkom opcijom. Mac aplikacija ima novu ikonu, a ikona aplikacijskog prozora dolazi iz istog SVG izvora na obje platforme.

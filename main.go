@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	appVersion      = "0.1.4"
+	appVersion      = "0.1.5"
 	listenAddress   = "127.0.0.1:17861"
 	defaultRepo     = "keldin94/obracun-desktop"
 	executableAsset = "Obracun-Windows.exe"
@@ -35,7 +35,7 @@ func updateAssetName() string {
 	return executableAsset
 }
 
-//go:embed app/index.html app/desktop.js
+//go:embed app/index.html app/desktop.js app/cloud.js branding/obracun-icon.svg
 var assets embed.FS
 
 type settings struct {
@@ -488,7 +488,7 @@ func openAppWindow() {
 		if _, e := os.Stat(p); e != nil && strings.Contains(p, string(filepath.Separator)) {
 			continue
 		}
-		cmd := exec.Command(p, "--app="+url, "--user-data-dir="+dir, "--no-first-run")
+		cmd := exec.Command(p, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disable-features=TranslateUI,Translate")
 		if e := cmd.Start(); e == nil {
 			// Once the window is closed, stop the embedded local server as well.
 			go func() { _ = cmd.Wait(); time.Sleep(2 * time.Second); os.Exit(0) }()
@@ -533,6 +533,18 @@ func main() {
 		b, _ := assets.ReadFile("app/desktop.js")
 		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
+		w.Write(b)
+	})
+	mux.HandleFunc("/cloud.js", func(w http.ResponseWriter, r *http.Request) {
+		b, _ := assets.ReadFile("app/cloud.js")
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Write(b)
+	})
+	mux.HandleFunc("/icon.svg", func(w http.ResponseWriter, r *http.Request) {
+		b, _ := assets.ReadFile("branding/obracun-icon.svg")
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
 		w.Write(b)
 	})
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
