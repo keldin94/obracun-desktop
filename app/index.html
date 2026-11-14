@@ -320,8 +320,8 @@ function showMonthlyPrintPreview(html){
   return shell;
 }
 
-async function exportMonthlyPDF({project,items,entries,proofs,month,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true}){
-  const html=await window.OBR_ENGINEERING.buildReport({project,items,entries,proofs,month,groups,selectedIds,includeEmpty,includeSummary,getFile,fileToDataUrl});
+async function exportMonthlyPDF({project,items,entries,proofs,month,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName=''}){
+  const html=await window.OBR_ENGINEERING.buildReport({project,items,entries,proofs,month,groups,selectedIds,includeEmpty,includeSummary,companyName,getFile,fileToDataUrl});
   showMonthlyPrintPreview(html);
 }
 
@@ -500,7 +500,7 @@ function App() {
     const notify = x => setToast(x);
     function openItem(id) { setSelectedItem(id); setEditEntry(null); setForm({ date: today(), place: '', description: '', expression: '', note: '',measurements:[] }); }
     function clearDemo(){notify('Nova instalacija počinje bez probnih podataka. Postojeće uvezene postavke nisu obrisane.');}
-    function startProject() { setProjectDraft({name:'',location:'',client:'',contractor:'',planRef:'',costCenter:'',preparedBy:'',clientRepresentative:'',contractorManager:''}); setModal('new-project'); }
+    function startProject() { setProjectDraft({name:'',location:'',client:'',contractor:state.companyProfile?.name||'',planRef:'',costCenter:'',preparedBy:'',clientRepresentative:'',contractorManager:''}); setModal('new-project'); }
     function saveProject(e) { e.preventDefault(); const name = projectDraft.name.trim(); if (!name)
         return; const id = uid(); set(s => ({ projects: [...s.projects, { id, ...projectDraft, name, createdAt: new Date().toISOString() }], selectedProject: id })); setGroup('Sve grupe'); setSelectedItem(null); setProjectScopeOpen(true);setPage('pregled'); setModal(null); notify('Gradilište je kreirano.'); }
     function saveProjectInfo(e) { e.preventDefault(); set(s => ({ projects: s.projects.map(p => p.id === project.id ? { ...p, ...projectDraft } : p) })); setModal(null); notify('Podaci projekta su ažurirani.'); }
@@ -511,7 +511,7 @@ function App() {
         set(old=>({projects:old.projects.filter(p=>p.id!==project.id),items:old.items.filter(i=>i.projectId!==project.id),entries:old.entries.filter(e=>e.projectId!==project.id),proofs:old.proofs.filter(p=>p.projectId!==project.id),selectedProject:old.projects.find(p=>p.id!==project.id)?.id||null}));
         setModal(null);setSelectedItem(null);setPage('sites');setProjectScopeOpen(false);notify('Gradilište je izbrisano.');
     }
-    function startItem(it) { setItemDraft(it ? { ...it } : { code: '', name: '', group: groups[0] || 'Ostala dela', unit: 'm²', contractQty: '', unitPrice: '',origin:'base',annexName:'' }); setModal('item'); }
+    function startItem(it) { setItemDraft(it ? { ...it } : { code: '', name: '', group: groups[0] || 'Ostala dela', unit: 'm²', contractQty: '', unitPrice: '',notes:'',origin:'base',annexName:'' }); setModal('item'); }
     function saveItem(e) { e.preventDefault(); if (!itemDraft.name.trim())
         return; const item = { ...itemDraft, projectId: project.id, id: itemDraft.id || uid(), contractQty: normNum(itemDraft.contractQty), unitPrice: normNum(itemDraft.unitPrice) }; if (itemDraft.id)
         set(s => ({ items: s.items.map(i => i.id === item.id ? item : i) }));
@@ -575,7 +575,7 @@ function App() {
             }
             const id = uid();
             await putFile(id, file);
-            set(s => ({ proofs: [...s.proofs, { id, projectId: project.id, itemId: record.id, filename: file.name, mime: file.type || 'application/octet-stream', size: file.size, month, createdAt: new Date().toISOString() }] }));
+            set(s => ({ proofs: [...s.proofs, { id, projectId: project.id, itemId: record.id, filename: file.name, caption:file.name.replace(/\.[^.]+$/, ''),rotation:0,widthPercent:0,maxHeightMm:0,mime: file.type || 'application/octet-stream', size: file.size, month, createdAt: new Date().toISOString() }] }));
             count++;
         }
         notify(`Dodano dokaznica: ${count}.`);
@@ -601,6 +601,9 @@ function App() {
     catch (e) {
         notify(e.message);
     } }
+    function updateProofMetadata(id,patch){
+       set(old=>({proofs:old.proofs.map(p=>p.id===id?{...p,...patch}:p)}));
+    }
     async function removeProof(p) { if (!window.confirm('Izbrisati ovu dokaznicu?'))
         return; await deleteFile(p.id); set(s => ({ proofs: s.proofs.filter(x => x.id !== p.id) })); notify('Dokaznica je izbrisana.'); }
     async function startExport(singleId=null) { if (!items.length) {
@@ -608,7 +611,7 @@ function App() {
         return;
     } setExportGroups(groups.slice()); setExportSingle(typeof singleId==='string'?singleId:null);setExportIncludeEmpty(false);setExportSummary(true); setModal('export'); }
     async function doExport() { setBusy(true); try {
-        await exportMonthlyPDF({ project, items, entries, proofs, month, groups:exportGroups,selectedIds:exportSingle?[exportSingle]:[],includeEmpty:exportIncludeEmpty,includeSummary:exportSummary });
+        await exportMonthlyPDF({ project, items, entries, proofs, month, groups:exportGroups,selectedIds:exportSingle?[exportSingle]:[],includeEmpty:exportIncludeEmpty,includeSummary:exportSummary,companyName:state.companyProfile?.name||'' });
         setModal(null);
         notify('Pregled je spreman. Klikni Ispiši / Spremi kao PDF.');
     }
@@ -1025,13 +1028,31 @@ function App() {
                             React.createElement("b", null, "Dodaj nacrt, skicu ili fotografiju"),
                             React.createElement("small", null, "PDF, JPG, PNG, WebP ili Ctrl+V zalijepljena slika")),
                         React.createElement(Plus, { size: 18 })),
-                    allProofsForItem.map(p => React.createElement("div", { key: p.id, className: "attachment-row" },
-                        React.createElement(FileText, { size: 18 }),
-                        React.createElement("button", { onClick: () => openProof(p) },
-                            p.filename,
-                            React.createElement("small", null, p.month)),
-                        React.createElement("button", { className: "icon-btn", title: "Izbri\u0161i", onClick: () => removeProof(p) },
-                            React.createElement(Trash2, { size: 16 })))),
+                    allProofsForItem.map(p => React.createElement("div",{key:p.id,style:{border:'1px solid #dde6ee',borderRadius:8,padding:10,marginBottom:10,background:'#fff'}},
+                        React.createElement('div',{style:{display:'flex',gap:8,alignItems:'center'}},
+                          React.createElement(FileText,{size:18}),
+                          React.createElement('button',{type:'button',onClick:()=>openProof(p),style:{flex:1,textAlign:'left',background:'none',border:0,color:'#183c54',cursor:'pointer'}},p.filename),
+                          React.createElement('button',{className:'icon-btn',title:'Izbriši',onClick:()=>removeProof(p)},
+                            React.createElement(Trash2,{size:16}))),
+                        React.createElement('label',{style:{display:'block',fontSize:11,marginTop:7}},'Naziv na obračunskom listu',
+                          React.createElement('input',{value:p.caption??p.filename,
+                            onChange:e=>updateProofMetadata(p.id,{caption:e.target.value}),
+                            placeholder:'npr. Tloris plošče nad pritličjem',
+                            style:{width:'100%',padding:'7px 8px',marginTop:3,border:'1px solid #ccd8e3',borderRadius:6}})),
+                        (p.mime||'').startsWith('image/')&&React.createElement('div',{style:{display:'flex',gap:10,flexWrap:'wrap',marginTop:8}},
+                          React.createElement('label',{style:{fontSize:11}},'Rotacija',
+                            React.createElement('select',{value:p.rotation||0,onChange:e=>updateProofMetadata(p.id,{rotation:Number(e.target.value)}),
+                                style:{display:'block',padding:6,border:'1px solid #ccd8e3',borderRadius:6}},
+                              ...[0,90,180,270].map(v=>React.createElement('option',{key:v,value:v},v+'°')))),
+                          React.createElement('label',{style:{fontSize:11}},'Širina na listu',
+                            React.createElement('select',{value:p.widthPercent||0,onChange:e=>updateProofMetadata(p.id,{widthPercent:Number(e.target.value)}),
+                              style:{display:'block',padding:6,border:'1px solid #ccd8e3',borderRadius:6}},
+                              ...[[0,'Automatski'],[100,'Cijela širina'],[75,'75%'],[50,'50%']].map(([v,label])=>React.createElement('option',{key:v,value:v},label)))),
+                          React.createElement('label',{style:{fontSize:11}},'Maks. visina skice',
+                            React.createElement('select',{value:p.maxHeightMm||0,onChange:e=>updateProofMetadata(p.id,{maxHeightMm:Number(e.target.value)}),
+                              style:{display:'block',padding:6,border:'1px solid #ccd8e3',borderRadius:6}},
+                              ...[[0,'Automatski'],[50,'50 mm'],[75,'75 mm'],[100,'100 mm'],[130,'130 mm']].map(([v,label])=>React.createElement('option',{key:v,value:v},label))))
+                        ))),
                     React.createElement("div", { className: "drawer-bottom-actions" },
                         React.createElement("button", { className: "text-action danger", onClick: () => removeItem(record) },
                             React.createElement(Trash2, { size: 15 }),
@@ -1086,6 +1107,10 @@ function App() {
                         React.createElement("select", { value: itemDraft.unit, onChange: e => setItemDraft({ ...itemDraft, unit: e.target.value }) }, ['m²', 'm³', 'm', 'kg', 't', 'kos', 'h', 'kom', 'paušal'].map(u => React.createElement("option", { key: u }, u))))),
                 React.createElement(Labeled, { label: "Opis postavke" },
                     React.createElement("input", { required: true, autoFocus: true, placeholder: "Naziv radova iz popisa", value: itemDraft.name, onChange: e => setItemDraft({ ...itemDraft, name: e.target.value }) })),
+                React.createElement(Labeled,{label:'Opombe / dodatni opis ispod postavke'},
+                    React.createElement('textarea',{value:itemDraft.notes||'',rows:3,
+                       placeholder:'npr. plošča nad pritličjem',
+                       onChange:e=>setItemDraft({...itemDraft,notes:e.target.value})})),
                 React.createElement(Labeled, { label: 'Vrsta postavke' },
                     React.createElement('select',{value:itemDraft.origin||'base',onChange:e=>setItemDraft({...itemDraft,origin:e.target.value})},
                       React.createElement('option',{value:'base'},'Osnovni popis'),React.createElement('option',{value:'annex'},'Aneks / dodatna dela'))),
@@ -1136,6 +1161,11 @@ function App() {
         modal === 'settings' && React.createElement(Dialog, { title: "Postavke i sigurnosna kopija", onClose: () => setModal(null) },
             React.createElement("div", { className: "settings-items" },
                 React.createElement("div", { className: "settings-block" },
+                    React.createElement("h3", null, "Firma koja izrađuje obračune"),
+                    React.createElement("p", null, "Naziv firme se automatski ispisuje kao Izvajalec na obračunskom listu ako gradilište nema drugi naziv izvođača."),
+                    React.createElement('input',{value:state.companyProfile?.name||'',placeholder:'Naziv firme / izvajalec',
+                       onChange:e=>set(old=>({companyProfile:{...(old.companyProfile||{}),name:e.target.value}})),
+                       style:{width:'100%',padding:10,borderRadius:8,border:'1px solid #ccd8e3',marginBottom:14}}),
                     React.createElement("h3", null, "Podaci projekta"),
                     React.createElement("p", null, "Uredi lokaciju, naziv i naru\u010Dioca aktivnog projekta."),
                     React.createElement("button", { className: "btn btn-outline", onClick: () => { setProjectDraft({ ...project }); setModal('edit-project'); } },
