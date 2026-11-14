@@ -62,6 +62,16 @@ jobs:
           cp Obracun-Windows.exe Obracun-Windows.exe.sha256 windows-package/
           echo 'Extract ZIP and launch Obracun-Windows.exe' > windows-package/PROCITAJ.txt
           (cd windows-package && zip -q -9 -r ../Obracun-Windows.zip .)
+      - name: Build Windows setup installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq nsis
+          VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
+          makensis -V3 -DAPP_VERSION="$VERSION" packaging/windows/installer.nsi
+          test -s Obracun-Setup-Windows.exe
+          sha256sum Obracun-Setup-Windows.exe > Obracun-Setup-Windows.exe.sha256
       - name: Build and package macOS Intel app
         shell: bash
         run: |
@@ -81,6 +91,13 @@ jobs:
           cp packaging/macos/INSTALACIJA_MAC.txt .
           zip -q -9 -r -y Obracun-macOS-Intel.zip Obracun.app INSTALACIJA_MAC.txt
           unzip -tq Obracun-macOS-Intel.zip
+      - name: Upload Mac app bundle for disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: obracun-macos-bundle
+          path: Obracun-macOS-Intel.zip
+          if-no-files-found: error
+          retention-days: 5
       - name: Publish version to GitHub Releases
         shell: bash
         env:
@@ -95,7 +112,40 @@ jobs:
           fi
           gh release create "v$VERSION" \
             Obracun-Windows.exe Obracun-Windows.exe.sha256 Obracun-Windows.zip \
+            Obracun-Setup-Windows.exe Obracun-Setup-Windows.exe.sha256 \
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.2.0: Pripremljen jednostavan model Registracija → Firma → Korisnici i uloge, odvojeni podaci po firmi i gradilištu. Cloud NIJE aktivan dok se ne poveže zasebna Supabase baza i primijeni supabase/002_organizations.sql. Lokalna aplikacija i dalje radi. Backup prije prelaska. Mac app nije potpisan."
+            --notes "v0.2.1: Windows ima pravi Setup installer, Start Menu i deinstalaciju. Sljedeća ažuriranja koriste installer i ponovo otvaraju instaliranu verziju. macOS dobija ZIP i DMG aplikaciju; za automatski update drži .app u folderu s pravom upisa (npr. ~/Applications). Podaci ostaju lokalno. Nisu digitalno potpisani. Cloud i dalje zahtijeva backend."
+
+  macos-dmg:
+    needs: desktop-release
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Download built macOS app
+        uses: actions/download-artifact@v4
+        with:
+          name: obracun-macos-bundle
+      - name: Package native macOS disk image
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p disk-image
+          ditto -x -k Obracun-macOS-Intel.zip disk-image
+          test -x disk-image/Obracun.app/Contents/MacOS/Obracun
+          ln -s /Applications disk-image/Applications
+          hdiutil create -volname "OBRAČUN" -srcfolder disk-image -ov -format UDZO Obracun-macOS-Intel.dmg
+          hdiutil verify Obracun-macOS-Intel.dmg
+          shasum -a 256 Obracun-macOS-Intel.dmg > Obracun-macOS-Intel.dmg.sha256
+      - name: Add DMG to the same GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="$(grep -E '^[[:space:]]*appVersion[[:space:]]*=' main.go | head -1 | cut -d '"' -f 2)"
+          gh release upload "v$VERSION" Obracun-macOS-Intel.dmg Obracun-macOS-Intel.dmg.sha256 --repo "$GITHUB_REPOSITORY"
