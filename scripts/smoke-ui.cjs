@@ -23,7 +23,7 @@ const assert = require('node:assert/strict');
      await new Promise(resolve=>setTimeout(resolve,500));
    }
    assert.ok(ready,'Desktop server not responding: '+logs);
-   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+   browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
    const page=await browser.newPage();
    const failures=[];
    page.on('pageerror',e=>failures.push(String(e.stack||e)));

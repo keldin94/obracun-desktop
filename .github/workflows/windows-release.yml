@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx playwright install --with-deps chromium
+          google-chrome --version
           node scripts/smoke-ui.cjs
       - name: Generate app icons for both systems
         shell: bash
