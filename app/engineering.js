@@ -56,27 +56,108 @@ function groupForPosition({code='',name='',group='',fallback='Ostala dela',secti
   if(/zidanje|zidars/.test(desc))return 'Zidarska dela';
   return GROUPS.includes(fallback)?fallback:'Ostala dela';
 }
+// Safe calculator for expressions containing measurements (no eval / Function).
+// Allows +, -, *, /, brackets and variables such as a,b,c,h,d,q,r,t,kos.
+function evaluateVariables(expression, row={}) {
+ const vars={};
+ for(const key of ['a','b','c','h','d','q','r','t','kos']){
+  const raw=key==='kos' && (row.kos===''||row.kos==null)?'1':row[key];
+  if(raw!=='' && raw!==undefined && raw!==null){
+   if(!/^[+-]?\d+(?:[.,]\d+)?$/.test(String(raw).trim()))throw Error('Neispravna dimenzija: '+key);
+   vars[key]=Number(String(raw).replace(',','.'));
+  }
+ }
+ for(const [key,raw] of Object.entries(row.extraVariables||{})){
+  const k=key.trim().toLowerCase();
+  if(!/^[a-z_][a-z0-9_]{0,11}$/.test(k)||k==='x'||k==='kos')throw Error('Neispravna dodatna varijabla: '+key);
+  if(raw!=='' && raw!=null){
+   if(!/^[+-]?\d+(?:[.,]\d+)?$/.test(String(raw).trim()))throw Error('Neispravna vrijednost varijable '+key);
+   vars[k]=Number(String(raw).replace(',','.'));
+  }
+ }
+ let src=String(expression||'').trim();
+ if(!src||src.length>320)throw Error('Upiši formulu do 320 znakova');
+ // x/X is a multiplication symbol in construction notation; 2kos = 2 * kos.
+ src=src.replace(/[×·∙xX]/g,'*').replace(/(\d),(\d)/g,'$1.$2').replace(/\s+/g,'')
+   .replace(/(\d)([a-zA-Z_])/g,'$1*$2').replace(/([a-zA-Z0-9_])\(/g,'$1*(')
+   .replace(/\)([a-zA-Z0-9_(])/g,')*$1').replace(/\*{2,}/g,'*');
+ let at=0,tokens=[],match;
+ const token=/\d+(?:\.\d+)?|[a-zA-Z_][a-zA-Z0-9_]*|[()+*/-]/y;
+ while(at<src.length){
+  token.lastIndex=at;match=token.exec(src);
+  if(!match||match.index!==at)throw Error('Neispravan znak u formuli: '+src.slice(at,at+3));
+  tokens.push(match[0]);if(tokens.length>150)throw Error('Formula je preduga');at=token.lastIndex;
+ }
+ if(!tokens.length)throw Error('Prazna formula');
+ let k=0;const peek=()=>tokens[k];const take=x=>peek()===x?(k++,true):false;
+ function atom(){
+  if(take('+'))return atom();
+  if(take('-'))return -atom();
+  if(take('(')){const v=sum();if(!take(')'))throw Error('Nedostaje zatvorena zagrada');return v;}
+  const t=tokens[k++];
+  if(!t)throw Error('Nedostaje broj ili varijabla');
+  if(/^\d/.test(t))return Number(t);
+  if(/^[a-zA-Z_]/.test(t)){
+    const key=t.toLowerCase();if(!Object.hasOwn(vars,key))throw Error('Upiši vrijednost varijable: '+t);
+    return vars[key];
+  }
+  throw Error('Neispravan izraz blizu '+t);
+ }
+ function product(){
+  let v=atom();
+  while(peek()==='*'||peek()==='/'){
+   const op=tokens[k++],r=atom();
+   if(op==='/'&&r===0)throw Error('Dijeljenje nulom');
+   v=op==='*'?v*r:v/r;
+  }return v;
+ }
+ function sum(){
+  let v=product();
+  while(peek()==='+'||peek()==='-'){
+   const op=tokens[k++],r=product();v=op==='+'?v+r:v-r;
+  }return v;
+ }
+ const value=sum();
+ if(k<tokens.length||!Number.isFinite(value))throw Error('Neispravna formula');
+ const numeric=src.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g,t=>String(vars[t.toLowerCase()]??t));
+ return {value,numeric,variables:vars,normalized:src};
+}
 function isValidRow(row){
+ if(String(row.formula||'').trim()){
+   try{evaluateVariables(row.formula,row);return true}catch{return false}
+ }
  const modes={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:['direct']};
  return (modes[row.mode||'volume']||modes.volume).every(key=>/^[-+]?\d+(?:[.,]\d+)?$/.test(String(row[key]??'').trim()));
 }
-function calcRow(row){
- const mode=row.mode||'volume';const count=(row.kos===undefined||row.kos==='')?1:n(row.kos); const dims={a:n(row.a),b:n(row.b),c:n(row.c),h:n(row.h),d:n(row.d)};
+function calcRow(row) {
+ const mode=row.mode||'volume',custom=String(row.formula||'').trim();
+ const count=(row.kos===undefined||row.kos==='')?1:n(row.kos);
+ const dims={a:n(row.a),b:n(row.b),c:n(row.c),h:n(row.h),d:n(row.d)};
  const templates={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:[]};
- const vars=(templates[mode]||templates.volume).slice();
- const parts=vars.map(v=>v==='kos'?count:dims[v]);
- if(mode!=='pieces'&&mode!=='weight'&&mode!=='manual')parts.push(count);
- let result=mode==='manual'?n(row.direct):parts.reduce((a,b)=>a*b,1);
- if(mode!=='manual' && !vars.length)result=0;
- const openings=n(row.openings); if(openings)result-=openings;
- const negative=(row.sign||'+')==='-'; if(negative)result=-result;
- const label=normalize(row.label||row.place||'');
- let expression=mode==='manual'?String(n(row.direct)):parts.map(x=>String(x)).join(' × ');
- if(openings)expression+=' − '+openings;
- return {result,expression:(negative?'− (':'')+expression+(negative?')':''),label};
+ let result,expression,numericExpression,issue='';
+ if(custom){
+  try{
+   const evaluated=evaluateVariables(custom,row);
+   result=evaluated.value;
+   expression=custom+' = '+evaluated.numeric;
+   numericExpression=evaluated.numeric;
+  }catch(e){issue=e.message;result=NaN;expression=custom;numericExpression='0'}
+ }else{
+  const vars=(templates[mode]||templates.volume).slice();
+  const parts=vars.map(v=>v==='kos'?count:dims[v]);
+  if(mode!=='pieces'&&mode!=='weight'&&mode!=='manual')parts.push(count);
+  result=mode==='manual'?n(row.direct):parts.reduce((a,b)=>a*b,1);
+  if(mode!=='manual' && !vars.length)result=0;
+  expression=mode==='manual'?String(n(row.direct)):parts.map(x=>String(x)).join(' × ');
+  numericExpression=mode==='manual'?String(n(row.direct)):parts.join('*');
+ }
+ const openings=n(row.openings);if(openings){result-=openings;expression+=' − '+openings;numericExpression+='-('+openings+')'}
+ const negative=(row.sign||'+')==='-';
+ if(negative){result=-result;expression='− ('+expression+')';numericExpression='-('+numericExpression+')'}
+ return {result,expression,numericExpression,label:normalize(row.label||row.place||''),error:issue};
 }
 function calcRows(rows){return (rows||[]).reduce((sum,row)=>sum+calcRow(row).result,0)}
-function mathExpression(rows){return (rows||[]).map(r=>{const c=calcRow(r);let e=c.expression.replace(/×/g,'*').replace(/−/g,'-');return e}).join(' + ')||''}
+function mathExpression(rows){return (rows||[]).map(r=>{const c=calcRow(r);return c.numericExpression||'0'}).join(' + ')||''}
 function renderEntryRow(e,unit){
  const rows=e.measurements||[];
  if(!rows.length)return `<tr><td>${esc(e.place||'')}</td><td>${esc(e.description||'')}</td><td colspan="7" class="formula-cell">${esc(e.expression||'')}</td><td class="right"><b>${num(e.quantity)} ${esc(unit)}</b></td></tr>`;
@@ -159,5 +240,5 @@ async function buildReport({project,items,entries,proofs,month,groups,selectedId
   <h2>UKUPNO ZA MJESEC: ${money(total)}</h2><div class="spacer"></div><p class="muted">Obračunski period: ${esc(dateLabel)}. Izmjere su računane punom preciznošću, na ispisu zaokružene na dvije decimale.</p></section>`}
  return '<!doctype html><html lang="sl"><head><meta charset="utf-8">'+css+'</head><body>'+cover+pages+'</body></html>';
 }
-window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,isValidRow,calcRow,calcRows,mathExpression,buildReport};
+window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,evaluateVariables,isValidRow,calcRow,calcRows,mathExpression,buildReport};
 })();
