@@ -19,6 +19,18 @@ jobs:
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           go-version-file: go.mod
+      - name: Node toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build offline React UI runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npm run build:runtime
+          test -s app/runtime.bundle.js
+          node --check app/runtime.bundle.js
       - name: Unit tests
         run: |
           go test ./...
@@ -31,6 +43,12 @@ jobs:
           node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
           python3 -m json.tool app/cloud-config.json >/dev/null
           test -s supabase/002_organizations.sql
+      - name: Browser smoke test (must render real app, not a white screen)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          node scripts/smoke-ui.cjs
       - name: Generate app icons for both systems
         shell: bash
         run: |
@@ -126,7 +144,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.3.1: Dopunjeni A4 listovi prema dostavljenom primjeru: obračunski načrt, stroškovno mesto, naručnik, izvođač i potpisnici; dodatno polje materijala u dimenzijskoj tabeli i provjera nepopunjenih dimenzija. Ostale funkcije v0.3.0 su zadržane. Ne zaboravi backup. PDF dokaznice nisu fizički spojene u jedan dokument."
+            --notes "v0.3.2: Ispravljen bijeli ekran na Windowsu i Macu. React 16 iz starih HTML skripti zamijenjen je lokalno pakiranim React 18 i ikonama. Dodan obavezni preglednik-test koji pokreće aplikaciju, otvara Gradilišta i testira klik. Sačuvani podaci i sve funkcije iz v0.3.1 ostaju."
 
   windows-installer-smoke:
     needs: desktop-release

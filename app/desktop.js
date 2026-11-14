@@ -23,7 +23,7 @@
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
   const platformLabel = navigator.platform.startsWith('Mac') ? 'macOS Intel' : 'Windows';
-  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b id="ob-active-version">v0.3.1</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b id="ob-active-version">v0.3.2</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
   widget.style.display='none'; // Updates are available from Settings only.
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';

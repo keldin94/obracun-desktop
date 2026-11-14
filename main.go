@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	appVersion      = "0.3.1"
+	appVersion      = "0.3.2"
 	listenAddress   = "127.0.0.1:17861"
 	defaultRepo     = "keldin94/obracun-desktop"
 	executableAsset = "Obracun-Windows.exe"
@@ -35,7 +35,7 @@ func updateAssetName() string {
 	return "Obracun-Setup-Windows.exe"
 }
 
-//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js branding/obracun-icon.svg app/cloud-config.json
+//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js app/runtime.bundle.js branding/obracun-icon.svg app/cloud-config.json
 var assets embed.FS
 
 type settings struct {
@@ -640,6 +640,15 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		_, _ = w.Write(b)
+	})
+	mux.HandleFunc("/runtime.js", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet { w.WriteHeader(http.StatusMethodNotAllowed); return }
+		b, e := assets.ReadFile("app/runtime.bundle.js")
+		if e != nil { http.Error(w, "UI runtime unavailable", http.StatusInternalServerError); return }
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		_, _ = w.Write(b)

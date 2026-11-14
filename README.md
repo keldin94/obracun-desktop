@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.1 — Windows i macOS Intel
+# OBRAČUN v0.3.2 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -61,3 +61,6 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 
 ### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
 U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
+
+### Fix v0.3.2 — white startup screen
+React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at build time and served offline. The old embedded React 16 libraries (without hooks) were removed. GitHub Actions now runs a real Chromium UI smoke test before publishing an installer. To build from source, run `npm install && npm run build:runtime && go test ./... && go build .`. Existing user data stays in the same profile.
