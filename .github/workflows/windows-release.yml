@@ -72,6 +72,13 @@ jobs:
           makensis -V3 -DAPP_VERSION="$VERSION" packaging/windows/installer.nsi
           test -s Obracun-Setup-Windows.exe
           sha256sum Obracun-Setup-Windows.exe > Obracun-Setup-Windows.exe.sha256
+      - name: Upload Windows setup for smoke test
+        uses: actions/upload-artifact@v4
+        with:
+          name: obracun-windows-installer
+          path: Obracun-Setup-Windows.exe
+          if-no-files-found: error
+          retention-days: 5
       - name: Build and package macOS Intel app
         shell: bash
         run: |
@@ -118,6 +125,32 @@ jobs:
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
             --notes "v0.2.1: Windows ima pravi Setup installer, Start Menu i deinstalaciju. Sljedeća ažuriranja koriste installer i ponovo otvaraju instaliranu verziju. macOS dobija ZIP i DMG aplikaciju; za automatski update drži .app u folderu s pravom upisa (npr. ~/Applications). Podaci ostaju lokalno. Nisu digitalno potpisani. Cloud i dalje zahtijeva backend."
 
+  windows-installer-smoke:
+    needs: desktop-release
+    runs-on: windows-2022
+    steps:
+      - name: Download Windows setup
+        uses: actions/download-artifact@v4
+        with:
+          name: obracun-windows-installer
+      - name: Install, inspect shortcuts and uninstall
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $p = Start-Process -FilePath ".\\Obracun-Setup-Windows.exe" -ArgumentList "/S" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Setup exit code $($p.ExitCode)" }
+          $bin = Join-Path $env:LOCALAPPDATA "Programs\\Obracun\\Obracun-Windows.exe"
+          $menu = Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\OBRAČUN\\OBRAČUN.lnk"
+          if (!(Test-Path $bin)) { throw "Installed program is missing" }
+          if (!(Test-Path $menu)) { throw "Start Menu shortcut is missing" }
+          $entry = Get-ItemProperty "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\KeldinObracun"
+          if ($entry.DisplayName -ne "OBRAČUN") { throw "Uninstall registry entry missing" }
+          $uninstall = Join-Path $env:LOCALAPPDATA "Programs\\Obracun\\Uninstall.exe"
+          $p = Start-Process -FilePath $uninstall -ArgumentList "/S" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Uninstall exit code $($p.ExitCode)" }
+          if (Test-Path $bin) { throw "Program was not removed" }
+          Write-Output "Windows install/shortcuts/uninstall succeeded."
+          
   macos-dmg:
     needs: desktop-release
     runs-on: macos-15
