@@ -23,7 +23,7 @@
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
   const platformLabel = navigator.platform.startsWith('Mac') ? 'macOS Intel' : 'Windows';
-  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b>v0.1.5</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b>v0.1.6</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';
   overlay.innerHTML=`<div id="ob-update-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-heading">

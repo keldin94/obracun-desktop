@@ -38,6 +38,14 @@ jobs:
           image.save(out/'obracun-icon.ico',format='ICO',sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
           image.save(out/'Obracun.icns',format='ICNS')
           PY
+      - name: Embed shared icon into Windows executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tools
+          GOBIN="$PWD/.tools" go install github.com/akavel/rsrc@v0.10.2
+          ./.tools/rsrc -arch amd64 -ico branding/obracun-icon.ico -o rsrc_windows_amd64.syso
+          test -s rsrc_windows_amd64.syso
       - name: Build Windows x64
         shell: bash
         run: |
@@ -85,4 +93,4 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.1.5: Nova navigacija Gradilišta, zajednička ikona, bez ponude za prevod i pripremljen Supabase cloud sync. Cloud postaje aktivan tek nakon primjene SQL šeme, unosa Supabase URL/publishable ključa i prijave istim nalogom na oba uređaja. Napravi backup prije sinhronizacije. Mac app nije Apple potpisan/notarizovan."
+            --notes "v0.1.6: Nova navigacija Gradilišta, zajednička ikona, bez ponude za prevod i pripremljen Supabase cloud sync. Cloud postaje aktivan tek nakon primjene SQL šeme, unosa Supabase URL/publishable ključa i prijave istim nalogom na oba uređaja. Napravi backup prije sinhronizacije. Mac app nije Apple potpisan/notarizovan."
