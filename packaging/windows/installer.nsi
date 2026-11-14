@@ -8,8 +8,8 @@ Unicode True
 !define APP_NAME "OBRAČUN"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\KeldinObracun"
 !define APP_REG_KEY "Software\Keldin\Obracun"
-!define MUI_ICON "branding\obracun-icon.ico"
-!define MUI_UNICON "branding\obracun-icon.ico"
+!define MUI_ICON "branding/obracun-icon.ico"
+!define MUI_UNICON "branding/obracun-icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\Obracun-Windows.exe"
 
