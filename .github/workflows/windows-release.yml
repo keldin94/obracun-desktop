@@ -26,6 +26,9 @@ jobs:
       - name: Validate multi-company cloud client
         run: |
           node --check app/cloud.js
+          node --check app/engineering.js
+          node --test app/tests/engineering.test.cjs
+          node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
           python3 -m json.tool app/cloud-config.json >/dev/null
           test -s supabase/002_organizations.sql
       - name: Generate app icons for both systems
@@ -123,7 +126,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.2.1: Windows ima pravi Setup installer, Start Menu i deinstalaciju. Sljedeća ažuriranja koriste installer i ponovo otvaraju instaliranu verziju. macOS dobija ZIP i DMG aplikaciju; za automatski update drži .app u folderu s pravom upisa (npr. ~/Applications). Podaci ostaju lokalno. Nisu digitalno potpisani. Cloud i dalje zahtijeva backend."
+            --notes "v0.3.0: Grupisanje više vrsta radova na jednom Excel sheetu, izbacivanje nultih/opisnih pozicija, ručna i grupna klasifikacija, aneksi s historijom, tabelarni obračun dimenzija i odbitaka, lijepljenje skica Ctrl+V i A4 obračunski list sa skicama i potpisima. Izvoz pojedinačnog lista, više grupa ili svega za odabrani mjesec. Ažuriranje je u Postavkama. PDF dokaznice se zasad navode, nisu fizički spojene."
 
   windows-installer-smoke:
     needs: desktop-release

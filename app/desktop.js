@@ -23,7 +23,8 @@
   const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
   const widget=document.createElement('div');widget.id='ob-desktop-update';
   const platformLabel = navigator.platform.startsWith('Mac') ? 'macOS Intel' : 'Windows';
-  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b id="ob-active-version">v0.2.1</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.innerHTML='<span class="ob-version">OBRAČUN '+platformLabel+' <b id="ob-active-version">v0.3.0</b></span><button type="button" id="ob-open-update">Provjeri ažuriranja</button>';
+  widget.style.display='none'; // Updates are available from Settings only.
   document.body.appendChild(widget);
   const overlay=document.createElement('div');overlay.id='ob-update-overlay';
   overlay.innerHTML=`<div id="ob-update-dialog" role="dialog" aria-modal="true" aria-labelledby="ob-heading">
@@ -52,4 +53,5 @@
   by('ob-check').onclick=check;by('ob-install').onclick=install;
   overlay.addEventListener('mousedown',e=>{if(e.target===overlay)overlay.classList.remove('open')});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')overlay.classList.remove('open')});
+  window.OBR_UPDATES={open:()=>{overlay.classList.add('open');check();}};
 })();

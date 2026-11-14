@@ -1,4 +1,4 @@
-# OBRAČUN v0.2.1 — Windows i macOS Intel
+# OBRAČUN v0.3.0 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -47,3 +47,14 @@ Prije uključivanja provjeriti Supabase Auth, RLS, odvojene firme i backup. Vidi
 `go test ./...` i `go vet ./...`. Workflow `.github/workflows/windows-release.yml` izrađuje i provjerava pakete.
 `packaging/windows/installer.nsi` je NSIS installer. `packaging/macos/Info.plist` opisuje macOS app.
 U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju stabilnom radi nadogradnji.
+
+## Obračunski listovi i grupe (v0.3.0)
+- Jedan Excel sheet može sadržavati BETONSKA, TESARSKA i druge grupe; zaglavlja se prepoznaju, napomene i prazne (0/0) stavke se preskaču.
+- Prije uvoza svakoj prepoznatoj poziciji možeš promijeniti grupu; poslije uvoza koristi **Organizuj grupe** za pojedinačne i grupne promjene.
+- Naknadni uvoz podržava **Aneks** i uređivanje postojećih cijena/količina uz zapis prethodnih vrijednosti. Obračunski unosi ostaju sačuvani.
+- Dimenzijski obračun po redovima A/B/C...: a,b,c,h,d,kos, odbici, plus/minus; puni decimalni proračun, formule i historija.
+- Sliku iz clipboarda zalijepi sa Ctrl+V dok je otvorena postavka; fotografije i skice raspoređuju se automatski u A4 ispisu.
+- Mjesečni PDF: pojedinačna postavka, jedna ili više grupa ili sve; opciona naslovnica/rekapitulacija i prazni listovi.
+- **Ograničenje:** PNG/JPG slike su umetnute u ispis; dodatni PDF dokumenti su trenutno popisani, ne fizički spojeni s ispisom.
+- Ažuriranja su premještena u **Postavke i backup → Provjeri ažuriranja**.
+- Prije prvog nadograđivanja napravi backup. Stari obračuni ostaju sačuvani.
