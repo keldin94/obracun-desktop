@@ -35,3 +35,32 @@ test('PDF contains required fields and month Nov 2026',async()=>{
   assert.ok(html.toUpperCase().includes(field.toUpperCase()),field);
  }
 });
+
+test('Slobodna formula koristi postojeće dimenzije i kos bez ponovnog upisivanja',()=>{
+ const row={a:'8,35',b:'19,62',c:'0,20',kos:'1',formula:'a*x(b+c)x2kos'};
+ const calc=E.evaluateVariables(row.formula,row);
+ assert.equal(calc.value,8.35*(19.62+.2)*2);
+ assert.equal(E.isValidRow(row),true);
+ assert.equal(E.calcRow(row).result,calc.value);
+ assert.match(E.calcRow(row).expression,/8\.35/);
+});
+test('Dodatna slova, odbici i armatura rade bez izvršavanja koda',()=>{
+ const row={a:'5',kos:'1',q:'2',extraVariables:{e:'3'},formula:'a*(q+e)*kos',openings:'5',rebarPositions:'4, 5, 6'};
+ assert.equal(E.calcRow(row).result,20);
+ assert.equal(E.isValidRow(row),true);
+ assert.equal(E.isValidRow({...row,formula:'a+unknown'}),false);
+ assert.equal(E.isValidRow({...row,formula:'a/0'}),false);
+ assert.equal(E.isValidRow({...row,formula:'alert(1)'}),false);
+});
+test('PDF sadrži odvojene Mesečna/Skupna kolone, opombe i oznake armature',async()=>{
+ const project={id:'P',name:'Prestranek',client:'Glavni izvajalec'};
+ const item={id:'I',projectId:'P',name:'Armatura',code:'4.11.1',notes:'Plošča nad pritličjem',group:'Betonska dela',unit:'kg',contractQty:2000,unitPrice:.45};
+ const entries=[
+  {itemId:'I',month:'2026-10',quantity:45},
+  {itemId:'I',month:'2026-11',quantity:90,place:'Plošča',measurements:[{mode:'weight',a:'30',kos:'3',rebarPositions:'2, 5, 8'}]}
+ ];
+ const html=await E.buildReport({project,items:[item],entries,proofs:[],month:'2026-11',groups:['Betonska dela'],includeSummary:false,companyName:'Firma d.o.o.',getFile:async()=>null,fileToDataUrl:async()=>null});
+ for(const t of ['ledger-month','ledger-cumulative','Mesečna','Skupna','135,00','90,00','Plošča nad pritličjem','Poz. armature','Firma d.o.o.']){
+  assert.ok(html.includes(t),'Missing '+t);
+ }
+});
