@@ -41,6 +41,9 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    // Verify an actual user interaction, not just static HTML.
    await page.getByRole('button',{name:/Novo gradbišče|Novo gradilište/i}).first().click();
    await page.getByPlaceholder(/Vnesi naziv projekta|Unesi naziv projekta/).waitFor({timeout:5000});
+   assert.ok(await page.getByRole('combobox').filter({has:page.locator('option[value="2"]')}).count()>=1,
+       'Project billing frequency missing');
+   assert.ok(await page.locator('canvas[aria-label="Površina za podpis"]').count()===1,'Signature pad not visible');
    assert.deepEqual(failures,[],'Page errors after opening project form');
    // Cloud configuration must be built in: no customer-side URL or API key setup.
    await page.getByRole('button',{name:/Prekliči|Otkaži|Otkazi/i}).first().click();
@@ -69,15 +72,20 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    await page.locator('.drawer').waitFor({state:'visible'});
    const width=await page.locator('.drawer').evaluate(el=>el.getBoundingClientRect().width);
    assert.ok(width>=850,'Measurement editor is still too narrow: '+width);
-   await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
+   assert.equal(await page.locator('.ob-measure-card').count(),1,'A blank row must already be open');
    await page.locator('.ob-measure-card').first().waitFor();
    await page.locator('.ob-measure-card label').filter({hasText:'Vgrajena masa (kg)'}).locator('input').fill('23,5');
+   await page.locator('.ob-measure-grandtotal').getByText(/23,500|23\.500/).waitFor();
+   await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
+   assert.equal(await page.locator('.ob-measure-card').count(),2);
+   assert.equal(await page.locator('.ob-measure-card.ob-collapsed').count(),1,'Old row should collapse');
+   await page.locator('.ob-measure-card.ob-expanded').getByRole('button',{name:'Odstrani vrstico'}).click();
    await page.locator('.ob-measure-grandtotal').getByText(/23,500|23\.500/).waitFor();
    await page.locator('.ob-measure-card label').filter({hasText:'Številke armaturnih pozicij'}).locator('input').fill('4, 7, 12');
    assert.ok(await page.locator('.ob-measure-card').getByText(/Razčlenitev po premerih/).count()>0,'Armature diameter breakdown option missing');
    await page.getByRole('button',{name:/Zapri postavko|Zatvori postavku/}).first().click();
    await page.locator('.items-table tbody tr').nth(1).click();
-   await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
+   assert.equal(await page.locator('.ob-measure-card').count(),1,'New m³ item should already have an open row');
    for(const [name,value] of [['a (m)','8,35'],['b (m)','19,62'],['c (m)','0,20']]){
      await page.locator('.ob-measure-card label').filter({hasText:name}).first().locator('input').fill(value);
    }
