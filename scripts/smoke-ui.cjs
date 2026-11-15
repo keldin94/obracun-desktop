@@ -143,9 +143,9 @@ if(!expectedVersion)throw Error('Version not found in main.go');
      await printPage.setContent(withData,{waitUntil:'load'});
      const populated=await measureLayout();
      assert.ok(populated.ledgerHeight>550,'Work box must occupy most of the printable page: '+JSON.stringify(populated));
-     assert.ok(Math.abs(populated.signatureBottomGap-(12*96/25.4))<3,'Preview must show 12mm bottom paper margin: '+JSON.stringify(populated));
-     assert.ok(Math.abs(populated.leftBindingMargin-(25*96/25.4))<3,'Preview lacks 25mm filing/binding margin: '+JSON.stringify(populated));
-     assert.ok(Math.abs(populated.rightPaperMargin-(12*96/25.4))<3,'Preview lacks 12mm right margin: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.signatureBottomGap-(7*96/25.4))<3,'Preview must show 7mm bottom paper margin: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.leftBindingMargin-(20*96/25.4))<3,'Preview lacks 20mm filing/binding margin: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.rightPaperMargin-(7*96/25.4))<3,'Preview lacks 7mm right margin: '+JSON.stringify(populated));
      assert.ok(populated.signatureTopBorder===0 && populated.monthSubtotalTopBorder===0,
        'Duplicate line at the end of measurement work area: '+JSON.stringify(populated));
      assert.ok(populated.workToSignatureGap>=0 && populated.workToSignatureGap<20,'Excess gap between work area and signature: '+JSON.stringify(populated));
@@ -157,8 +157,8 @@ if(!expectedVersion)throw Error('Version not found in main.go');
      assert.ok(Math.abs(printGeometry.leftBindingMargin)<3 && Math.abs(printGeometry.rightPaperMargin)<3,
        'Print content should not have a second, duplicate margin: '+JSON.stringify(printGeometry));
      assert.ok(Math.abs(populated.pageHeight-297*96/25.4)<3 &&
-       Math.abs(printGeometry.pageHeight-273*96/25.4)<3,
-       'Expected A4 preview size and 273mm printable height: '+JSON.stringify({populated,printGeometry}));
+       Math.abs(printGeometry.pageHeight-283*96/25.4)<3,
+       'Expected A4 preview size and 283mm printable height: '+JSON.stringify({populated,printGeometry}));
      const pdf=await printPage.pdf({preferCSSPageSize:true,printBackground:true});
      assert.ok(pdf.subarray(0,5).toString()==='%PDF-','Printed PDF was not produced');
      await printPage.emulateMedia({media:'screen'});
