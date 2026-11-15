@@ -35,16 +35,16 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    page.on('console',m=>{if(m.type()==='error')failures.push('console: '+m.text())});
    const result=await page.goto('http://127.0.0.1:17861/',{waitUntil:'load'});
    assert.equal(result.status(),200);
-   await page.getByRole('button',{name:/Novo gradilište/i}).first().waitFor({timeout:15000});
+   await page.getByRole('button',{name:/Novo gradbišče|Novo gradilište/i}).first().waitFor({timeout:15000});
    assert.ok(await page.locator('#root').locator('>*').count()>0,'The React app rendered an empty root');
    assert.deepEqual(failures,[],'Page errors on launch');
    // Verify an actual user interaction, not just static HTML.
-   await page.getByRole('button',{name:/Novo gradilište/i}).first().click();
-   await page.getByPlaceholder(/Unesi naziv projekta/).waitFor({timeout:5000});
+   await page.getByRole('button',{name:/Novo gradbišče|Novo gradilište/i}).first().click();
+   await page.getByPlaceholder(/Vnesi naziv projekta|Unesi naziv projekta/).waitFor({timeout:5000});
    assert.deepEqual(failures,[],'Page errors after opening project form');
    // Cloud configuration must be built in: no customer-side URL or API key setup.
-   await page.getByRole('button',{name:/Otkaži|Otkazi/i}).first().click();
-   await page.getByRole('button',{name:/Firma i korisnici/i}).first().click();
+   await page.getByRole('button',{name:/Prekliči|Otkaži|Otkazi/i}).first().click();
+   await page.getByRole('button',{name:/Podjetje in uporabniki|Firma i korisnici/i}).first().click();
    await page.locator('#ob-account-layer').waitFor({state:'visible',timeout:7000});
    await page.locator('#ob-email').waitFor({state:'visible',timeout:7000});
    assert.ok(await page.locator('[data-op="signup"]').count()>0,'Cloud registration not available');
