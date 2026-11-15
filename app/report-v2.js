@@ -14,8 +14,7 @@ function linesFor(entries){
   (e.measurements?.length?sortRows(e.measurements):[null]).map((row,j)=>({entry:e,row,j})));
 }
 function visibleKeys(lines){
- return dimensions.filter(k=>lines.some(({row})=>row&&filled(row[k])&&
-   (k!=='kos'||String(row.kos)!=='1'||lines.some(x=>x.row&&filled(x.row.kos)&&String(x.row.kos)!=='1'))));
+ return dimensions.filter(k=>lines.some(({row})=>row&&filled(row[k])));
 }
 function numericFormula(calc){
  return String(calc.numericExpression||calc.expression||'').replace(/\*/g,' × ').replace(/\//g,' ÷ ')
