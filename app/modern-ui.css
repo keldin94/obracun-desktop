@@ -14,7 +14,7 @@ button{transition:background-color .12s,border-color .12s,box-shadow .12s}
 .local-status{padding:9px;background:#252b3b;border-color:#394155}.side-settings{padding:9px}
 .main-shell{margin-left:212px;width:calc(100% - 212px)}
 .topbar{height:56px;padding:0 25px;background:#fff;border-color:#edf0f5}.month-picker{padding:6px 10px;border-radius:7px}
-.content{max-width:none;margin:0;padding:23px 26px 26px}.page-intro{margin-bottom:17px}.page-intro h1{font:740 24px/1.22 inherit;margin:0 0 5px;letter-spacing:-.4px}
+.content{max-width:none;margin:0;padding:23px 26px 26px}.page-intro{margin-bottom:17px}.page-intro h1{font-family:inherit;font-weight:740;font-size:24px;line-height:1.22;margin:0 0 5px;letter-spacing:-.4px}
 .eyebrow{margin-bottom:5px;letter-spacing:1px}.subtitle{font-size:11px}
 .btn{padding:8px 13px;min-height:34px;border-radius:7px;font-size:11px;font-weight:680;gap:7px}
 .btn-primary{background:#32394e;color:#fff}.btn-primary:hover{background:#232c40}
@@ -22,7 +22,7 @@ button{transition:background-color .12s,border-color .12s,box-shadow .12s}
 .panel{border-radius:9px;box-shadow:none;border:1px solid var(--ob-line)}
 .panel-head{padding:14px 17px}.progress-groups,.recent-list{padding:9px 17px 15px}
 .metrics{gap:10px;margin-bottom:13px}.metric{padding:13px 14px;border-radius:9px;box-shadow:none}
-.metric strong{font:750 21px inherit;margin-top:7px}.metric-top{font-size:11px}.metric-sub{margin-top:5px;font-size:10px}
+.metric strong{font-family:inherit;font-weight:750;font-size:21px;margin-top:7px}.metric-top{font-size:11px}.metric-sub{margin-top:5px;font-size:10px}
 .filters{padding:12px 14px;gap:9px}.search-box,.select-with-icon select{height:34px}.search-box input{font-size:12px}
 .items-table th{padding:10px;font-size:10px}.items-table td{padding:10px;font-size:11px}
 .items-table tbody tr:hover{background:#f1f4ff}.items-table .code{width:72px}
@@ -32,17 +32,17 @@ button{transition:background-color .12s,border-color .12s,box-shadow .12s}
 .drawer{width:min(1490px,calc(100vw - 40px));right:20px;top:12px;bottom:12px;border-radius:14px;box-shadow:0 30px 90px #080d2066;overflow:hidden}
 .drawer-head{padding:14px 22px 12px;gap:18px;background:#fff}
 .drawer-eyebrow{font-size:10px;letter-spacing:.5px;color:#5459c5}
-.drawer-head h2{font:740 17px/1.32 inherit;letter-spacing:-.2px;max-width:1050px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:4px 0}
+.drawer-head h2{font-family:inherit;font-weight:740;font-size:17px;line-height:1.32;letter-spacing:-.2px;max-width:1050px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:4px 0}
 .drawer-head p{font-size:11px}
 .drawer-body{padding:14px 20px 18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,.84fr);gap:11px 17px;align-items:start;align-content:start}
 .drawer-body>:not(.ob-live-rail){grid-column:1;min-width:0}
 .drawer-body>.ob-live-rail{grid-column:2;grid-row:1/span 30;min-width:0;position:sticky;top:0;align-self:start;max-height:calc(100vh - 136px)}
 .ob-page-preview{display:none!important}
 .record-cards{padding:8px 3px;margin:0;border-radius:8px;gap:0}
-.record-cards>div{gap:3px}.record-cards span{font-size:10px}.record-cards b{font:720 14px inherit}.record-cards small{font-size:9px}
+.record-cards>div{gap:3px}.record-cards span{font-size:10px}.record-cards b{font-family:inherit;font-weight:720;font-size:14px}.record-cards small{font-size:9px}
 .record-contract{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:9px 12px;border-radius:8px}
 .record-contract>div{display:grid;gap:4px;font-size:10px}.record-contract strong{font-size:11px}
-.drawer-section-title{margin:7px 0 0}.drawer-section-title h3{font:730 12px inherit}
+.drawer-section-title{margin:7px 0 0}.drawer-section-title h3{font-family:inherit;font-weight:730;font-size:12px}
 .entry-form{padding:12px;border-radius:9px;background:#fff;margin:0}
 .form-grid{gap:8px}.field{margin-bottom:9px;gap:5px}.field-label{font-size:10px}
 .field input,.field select{padding:8px 9px;min-height:33px}
