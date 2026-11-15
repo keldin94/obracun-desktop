@@ -42,6 +42,8 @@ jobs:
       - name: Validate multi-company cloud client
         run: |
           node --check app/cloud.js
+          node --check app/i18n.js
+          node --check app/measurement-editor.js
           node --check app/engineering.js
           node --test app/tests/engineering.test.cjs
           node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
