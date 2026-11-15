@@ -78,11 +78,11 @@ function evaluateVariables(expression, row={}) {
  let src=String(expression||'').trim();
  if(!src||src.length>320)throw Error('Upiši formulu do 320 znakova');
  // x/X is a multiplication symbol in construction notation; 2kos = 2 * kos.
- src=src.replace(/[×·∙xX]/g,'*').replace(/(\d),(\d)/g,'$1.$2').replace(/\s+/g,'')
+ src=src.replace(/[×·∙xX]/g,'*').replace(/[²]/g,'^2').replace(/(\d),(\d)/g,'$1.$2').replace(/\s+/g,'')
    .replace(/(\d)([a-zA-Z_])/g,'$1*$2').replace(/([a-zA-Z0-9_])\(/g,'$1*(')
    .replace(/\)([a-zA-Z0-9_(])/g,')*$1').replace(/\*{2,}/g,'*');
  let at=0,tokens=[],match;
- const token=/\d+(?:\.\d+)?|[a-zA-Z_][a-zA-Z0-9_]*|[()+*/-]/y;
+ const token=/\d+(?:\.\d+)?|[a-zA-Z_][a-zA-Z0-9_]*|[()+*/^\-]/y;
  while(at<src.length){
   token.lastIndex=at;match=token.exec(src);
   if(!match||match.index!==at)throw Error('Neispravan znak u formuli: '+src.slice(at,at+3));
@@ -91,8 +91,6 @@ function evaluateVariables(expression, row={}) {
  if(!tokens.length)throw Error('Prazna formula');
  let k=0;const peek=()=>tokens[k];const take=x=>peek()===x?(k++,true):false;
  function atom(){
-  if(take('+'))return atom();
-  if(take('-'))return -atom();
   if(take('(')){const v=sum();if(!take(')'))throw Error('Nedostaje zatvorena zagrada');return v;}
   const t=tokens[k++];
   if(!t)throw Error('Nedostaje broj ili varijabla');
@@ -103,10 +101,12 @@ function evaluateVariables(expression, row={}) {
   }
   throw Error('Neispravan izraz blizu '+t);
  }
+ function exponent(){let v=atom();if(take('^')){const power=unary();if(Math.abs(power)>16)throw Error('Eksponent je prevelik');v=Math.pow(v,power);}return v}
+ function unary(){if(take('+'))return unary();if(take('-'))return -unary();return exponent();}
  function product(){
-  let v=atom();
+  let v=unary();
   while(peek()==='*'||peek()==='/'){
-   const op=tokens[k++],r=atom();
+   const op=tokens[k++],r=unary();
    if(op==='/'&&r===0)throw Error('Dijeljenje nulom');
    v=op==='*'?v*r:v/r;
   }return v;
@@ -126,6 +126,11 @@ function isValidRow(row){
  if(String(row.formula||'').trim()){
    try{evaluateVariables(row.formula,row);return true}catch{return false}
  }
+ if(row.mode==='rebar'){
+   if(String(row.direct??'').trim()!=='')return /^[+-]?\d+(?:[.,]\d+)?$/.test(String(row.direct).trim());
+   const bands=(row.diameterBreakdown||[]).filter(x=>String(x.kg??'').trim()!=='');
+   return bands.length>0&&bands.every(x=>/^[+-]?\d+(?:[.,]\d+)?$/.test(String(x.kg).trim()));
+ }
  const modes={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:['direct']};
  return (modes[row.mode||'volume']||modes.volume).every(key=>/^[-+]?\d+(?:[.,]\d+)?$/.test(String(row[key]??'').trim()));
 }
@@ -134,6 +139,17 @@ function calcRow(row) {
  const count=(row.kos===undefined||row.kos==='')?1:n(row.kos);
  const dims={a:n(row.a),b:n(row.b),c:n(row.c),h:n(row.h),d:n(row.d)};
  const templates={volume:['a','b','h'],cubic:['a','b','c'],area:['a','b'],wall:['a','h'],thickness:['a','b','d'],length:['a'],pieces:['kos'],weight:['a','kos'],manual:[]};
+ if(mode==='rebar'&&!custom){
+   const bands=(row.diameterBreakdown||[]).filter(x=>String(x.kg??'').trim()!=='');
+   const direct=String(row.direct??'').trim();
+   const kg=direct!==''?n(direct):bands.reduce((acc,x)=>acc+n(x.kg),0);
+   const negative=(row.sign||'+')==='-';
+   const result=negative?-kg:kg;
+   const expression=direct!==''?
+     'Skupna masa armature = '+String(row.direct)+' kg':
+     bands.map(x=>'Ø'+(x.fi||'—')+': '+x.kg+' kg').join(' + ')+' = '+kg+' kg';
+   return {result,expression:negative?'− ('+expression+')':expression,numericExpression:String(result),label:normalize(row.label||''),error:''};
+ }
  let result,expression,numericExpression,issue='';
  if(custom){
   try{
@@ -161,8 +177,10 @@ function mathExpression(rows){return (rows||[]).map(r=>{const c=calcRow(r);retur
 function rowDetails(r){
  const extra=Object.entries(r.extraVariables||{}).filter(([k,v])=>k&&v!==''&&v!==null);
  const named=['q','r','t'].filter(k=>r[k]!==''&&r[k]!=null).map(k=>k+'='+r[k]);
- const positions=r.rebarPositions?['Poz. armature: '+r.rebarPositions]:[];
- const description=[...positions, ...named,...extra.map(([k,v])=>k+'='+v)];
+ const positions=r.rebarPositions?['Pozicije armature: '+r.rebarPositions]:[];
+ const bars=(r.diameterBreakdown||[]).filter(x=>String(x.kg??'').trim()).map(x=>'Ø '+(x.fi||'—')+': '+x.kg+' kg');
+ const category=r.rebarCategory?['Skupina: '+r.rebarCategory]:[];
+ const description=[...positions,...category,...bars,...named,...extra.map(([k,v])=>k+'='+v)];
  return description.join(' · ');
 }
 function renderEntryRow(e,unit){
