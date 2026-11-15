@@ -450,6 +450,9 @@ function App() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [search, setSearch] = useState('');
     const [group, setGroup] = useState('Sve grupe');
+    const [sortKey, setSortKey] = useState('');
+    const [sortDir, setSortDir] = useState('desc');
+    const [collageAspect,setCollageAspect]=useState(0.85);
     const [modal, setModal] = useState(null);
     const [projectDraft, setProjectDraft] = useState({name:'',location:'',client:'',contractor:'',planRef:'',costCenter:'',preparedBy:'',clientRepresentative:'',contractorManager:''});
     const [itemDraft, setItemDraft] = useState(null);
@@ -513,6 +516,35 @@ function App() {
             count++;
     } return { contract, current, cum, count }; }, [items, entries, month, half, project?.billingFrequency]);
     const filtered = useMemo(() => items.filter(i => (group === 'Sve grupe' || i.group === group) && (`${i.code} ${i.name} ${i.group}`).toLowerCase().includes(search.toLowerCase())), [items, group, search]);
+    const orderedItems=useMemo(()=>{
+       if(!sortKey)return filtered;
+       const cumulative=new Map(),monthly=new Map();
+       for(const e of entries){
+         if(BILL.until(e,project,month,half))cumulative.set(e.itemId,(cumulative.get(e.itemId)||0)+Number(e.quantity||0));
+         if(BILL.belongs(e,project,month,half))monthly.set(e.itemId,(monthly.get(e.itemId)||0)+Number(e.quantity||0));
+       }
+       const metric=it=>sortKey==='contract'?Number(it.contractQty)||0:
+         sortKey==='monthly'?(monthly.get(it.id)||0):
+         sortKey==='cumulative'?(cumulative.get(it.id)||0):
+         sortKey==='completion'?(Number(it.contractQty)?(cumulative.get(it.id)||0)/Number(it.contractQty)*100:0):
+         sortKey==='unit'?String(it.unit||''):
+         sortKey==='code'?String(it.code||''):String(it.name||'');
+       const sign=sortDir==='asc'?1:-1;
+       return filtered.map((it,index)=>({it,index})).sort((a,b)=>{
+         const va=metric(a.it),vb=metric(b.it);
+         const cmp=typeof va==='number'&&typeof vb==='number'?va-vb:
+           String(va).localeCompare(String(vb),'sl',{numeric:true,sensitivity:'base'});
+         return sign*cmp||a.index-b.index;
+       }).map(x=>x.it);
+    },[filtered,sortKey,sortDir,entries,project,month,half]);
+    const sortColumn=key=>{if(sortKey===key)setSortDir(x=>x==='asc'?'desc':'asc');else{setSortKey(key);setSortDir(['contract','monthly','cumulative','completion'].includes(key)?'desc':'asc')}};
+    const sortHeading=(key,label,right=false)=>React.createElement('th',{
+       className:(right?'right ':'')+'ob-sort-head',
+       'aria-sort':sortKey===key?(sortDir==='asc'?'ascending':'descending'):'none'
+      },React.createElement('button',{type:'button',className:'ob-sort-button',
+         onClick:()=>sortColumn(key),'aria-label':'Sortiraj: '+label,
+         title:'Klikni za naraščajoče / padajoče razvrščanje'},
+       label,React.createElement('span',{className:'ob-sort-symbol'},sortKey===key?(sortDir==='asc'?'▲':'▼'):'↕')));
     const notify = x => setToast(x);
     function openItem(id) {
       const chosen=items.find(it=>it.id===id);
@@ -872,15 +904,15 @@ function App() {
                         React.createElement("table", { className: "items-table" },
                             React.createElement("thead", null,
                                 React.createElement("tr", null,
-                                    React.createElement("th", { className: "code" }, "\u0160IFRA"),
-                                    React.createElement("th", null, "POSTAVKA / GRUPA"),
-                                    React.createElement("th", null, "JM"),
-                                    React.createElement("th", { className: "right" }, "PO POPISU"),
-                                    React.createElement("th", { className: "right" }, "OVAJ MJESEC"),
-                                    React.createElement("th", { className: "right" }, "KUMULATIVNO"),
-                                    React.createElement("th", { className: "right" }, "REALIZACIJA"),
+                                    sortHeading('code',"ŠIFRA"),
+                                    sortHeading('name',"POSTAVKA / GRUPA"),
+                                    sortHeading('unit',"JM"),
+                                    sortHeading('contract',"PO POPISU",true),
+                                    sortHeading('monthly',"TA MESEC",true),
+                                    sortHeading('cumulative',"SKUPAJ",true),
+                                    sortHeading('completion',"REALIZACIJA",true),
                                     React.createElement("th", null))),
-                            React.createElement("tbody", null, filtered.map(it => { const q = allEntryQty(it.id), m = monthlyQty(it.id), pct = it.contractQty ? q / it.contractQty * 100 : 0; return React.createElement("tr", { key: it.id, onClick: () => openItem(it.id) },
+                            React.createElement("tbody", null, orderedItems.map(it => { const q = allEntryQty(it.id), m = monthlyQty(it.id), pct = it.contractQty ? q / it.contractQty * 100 : 0; return React.createElement("tr", { key: it.id, onClick: () => openItem(it.id) },
                                 React.createElement("td", { className: "code" },
                                     React.createElement("span", { className: "code-badge" }, it.code)),
                                 React.createElement("td", { className: "item-name" },
@@ -1055,7 +1087,7 @@ function App() {
                                     React.createElement(Trash2, { size: 15 })))))) : React.createElement("div", { className: "empty-small" }, "Ova postavka jo\u0161 nema obra\u010Dunskih unosa.")),
                     React.createElement("input", { ref: proofInput, type: "file", accept: ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*", multiple: true, hidden: true, onChange: e => attach(Array.from(e.target.files || [])) }),
                     React.createElement(window.OBR_COLLAGE.ImageWorkspace,{
-                      item:record,proofs:allProofsForItem,entries,project,month,half,getFile,
+                      item:record,proofs:allProofsForItem,entries,project,month,half,getFile,fileToDataUrl,stageAspect:collageAspect,
                       onChangeItem:patch=>set(old=>({items:old.items.map(it=>it.id===record.id?{...it,...patch}:it)})),
                       onChangeProof:updateProofMetadata,
                       onReorder:ids=>set(old=>({proofs:old.proofs.map(p=>ids.includes(p.id)?{...p,collageOrder:ids.indexOf(p.id)+1}:p)})),
@@ -1067,7 +1099,8 @@ function App() {
                             " Izbri\u0161i postavku")),
                     React.createElement(window.OBR_COLLAGE.LivePreview,{
                       item:record,project,items,entries,proofs,month,half,getFile,fileToDataUrl,
-                      onPrint:()=>startExport(record.id)
+                      onPrint:()=>startExport(record.id),
+                      onLayoutAspect:ratio=>setCollageAspect(prev=>Math.abs(prev-ratio)>0.005?ratio:prev)
                     })))),
         React.createElement("input", { ref: importInput, type: "file", hidden: true, accept: ".xlsx,.csv,.xlsm", onChange: e => loadImport(e.target.files?.[0]) }),
         React.createElement("input", { ref: backupInput, type: "file", hidden: true, accept: ".json,application/json", onChange: e => restoreBackup(e.target.files?.[0]) }),
