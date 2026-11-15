@@ -35,7 +35,7 @@ func updateAssetName() string {
 	return "Obracun-Setup-Windows.exe"
 }
 
-//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js app/i18n.js app/measurement-editor.js app/runtime.bundle.js branding/obracun-icon.svg app/cloud-config.json
+//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js app/i18n.js app/measurement-editor.js app/periods.js app/report-v2.js app/signature-pad.js app/runtime.bundle.js branding/obracun-icon.svg app/cloud-config.json
 var assets embed.FS
 
 type settings struct {
@@ -660,6 +660,33 @@ func main() {
 		w.Header().Set("Content-Type","text/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control","no-store")
 		_,_ = w.Write(data)
+	})
+	mux.HandleFunc("/periods.js",func(w http.ResponseWriter,r *http.Request){
+		if r.Method!=http.MethodGet {w.WriteHeader(http.StatusMethodNotAllowed);return}
+		b,err:=assets.ReadFile("app/periods.js")
+		if err!=nil {http.Error(w,"UI unavailable",http.StatusInternalServerError);return}
+		w.Header().Set("Content-Type","text/javascript; charset=utf-8")
+		w.Header().Set("Cache-Control","no-store")
+		w.Header().Set("X-Content-Type-Options","nosniff")
+		_,_=w.Write(b)
+	})
+	mux.HandleFunc("/report-v2.js",func(w http.ResponseWriter,r *http.Request){
+		if r.Method!=http.MethodGet {w.WriteHeader(http.StatusMethodNotAllowed);return}
+		b,err:=assets.ReadFile("app/report-v2.js")
+		if err!=nil {http.Error(w,"UI unavailable",http.StatusInternalServerError);return}
+		w.Header().Set("Content-Type","text/javascript; charset=utf-8")
+		w.Header().Set("Cache-Control","no-store")
+		w.Header().Set("X-Content-Type-Options","nosniff")
+		_,_=w.Write(b)
+	})
+	mux.HandleFunc("/signature-pad.js",func(w http.ResponseWriter,r *http.Request){
+		if r.Method!=http.MethodGet {w.WriteHeader(http.StatusMethodNotAllowed);return}
+		b,err:=assets.ReadFile("app/signature-pad.js")
+		if err!=nil {http.Error(w,"UI unavailable",http.StatusInternalServerError);return}
+		w.Header().Set("Content-Type","text/javascript; charset=utf-8")
+		w.Header().Set("Cache-Control","no-store")
+		w.Header().Set("X-Content-Type-Options","nosniff")
+		_,_=w.Write(b)
 	})
 	mux.HandleFunc("/measurement-editor.js", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {w.WriteHeader(http.StatusMethodNotAllowed);return}
