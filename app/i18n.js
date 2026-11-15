@@ -132,7 +132,7 @@ const t=value=>{
 document.documentElement.lang=lang();
 const orig=React.createElement;
 React.createElement=function(tag,props,...children){
-  const next=props?{...props}:props;
+  const next=props?{...props}:{};
   if(next){
     for(const key of ['placeholder','title','aria-label','alt']){
       if(typeof next[key]==='string')next[key]=t(next[key]);
