@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.4 — Windows i macOS Intel
+# OBRAČUN v0.3.5 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -62,10 +62,10 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 ### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
 U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
 
-### Fix v0.3.4 — white startup screen
+### Fix v0.3.5 — white startup screen
 React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at build time and served offline. The old embedded React 16 libraries (without hooks) were removed. GitHub Actions now runs a real Chromium UI smoke test before publishing an installer. To build from source, run `npm install && npm run build:runtime && go test ./... && go build .`. Existing user data stays in the same profile.
 
-## v0.3.4 — Slobodni obračunski izrazi i izgled lista
+## v0.3.5 — Slobodni obračunski izrazi i izgled lista
 
 - Slobodne formule po redu koriste simbole a,b,c,h,d,q,r,t,kos i dodatna slova s vrijednostima; znak x ili * označava množenje, a zagrade određuju redoslijed. Podržani su +,−,×,÷; izračun se čuva punom preciznošću.
 - Posebno polje **Pozicije armature** ostaje uz izmjeru i ispisuje se u proračunu.
@@ -75,7 +75,7 @@ React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at 
 - Na svakom listu su **Mesečna** (tekući mjesec) i **Skupna** (prethodno + tekući) desne kolone; PDF prikaz ostaje optimiziran za A4.
 - Ako ima mnogo priloga/dimenzija, ispis može zahtijevati dodatnu stranicu kako bi sve ostalo čitljivo.
 
-## OBRAČUN Cloud — v0.3.4
+## OBRAČUN Cloud — v0.3.5
 
 **Cloud je centralno povezan** s namjenskim Supabase projektom `obracun` u regiji Frankfurt. Korisnici ne unose URL ni API ključeve.
 
@@ -89,3 +89,11 @@ React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at 
 Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka s drugog uređaja radi u intervalima do 30 sekundi. Ako se isti projekt izmijeni na dva uređaja odjednom, aplikacija zaustavlja prepisivanje i javlja konflikt, koji trenutno treba ručno riješiti.
 
 **Ograničenja:** Supabase Free nema automatske dnevne backupove i može pauzirati projekt nakon neaktivnosti. Za poslovnu upotrebu redovno izvezi vlastite sigurnosne kopije. Cloud sinhronizacija stvarnog korisničkog naloga treba završnu provjeru na Windowsu i Macu.
+
+## v0.3.5 – širši vnos izmer in jeziki
+- Vnos posamezne postavke se odpre v širokem urejevalniku do 1180 px.
+- Za kg: naziv dela, masa v kg, pozicije armature, po želji razdelitev po premerih Ø6–32 in razredi do vključno Ø12 / od Ø14.
+- Za m³: a, b, c (ali a, b, h/d); za m²: a, b; za kos: število kosov. Dodatne mere in formule so na voljo po potrebi.
+- Tipkovnica podpira spremenljivke, +, −, ×, ÷, oklepaje in potence (^2); izračunana formula se prikaže tudi v PDF obračunu.
+- **Nastavitve → Jezik aplikacije**: Slovenščina (privzeto) ali Bosanski. Jezik je ločen od podatkov in se shrani na napravi. Številčni izrazi in projektna imena se ne prevajajo.
+- Obstoječe izmere in projektna baza ostanejo nespremenjene; nove vrste izmer uporabljajo dodatna polja v obstoječem formatu.
