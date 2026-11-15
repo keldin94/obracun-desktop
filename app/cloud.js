@@ -16,9 +16,17 @@ function notice(m,p){status=m;phase=p||(configured?'connected':'offline');callba
 function hash(x){let n=2166136261,s=JSON.stringify(x);for(const c of s){n^=c.charCodeAt(0);n=Math.imul(n,16777619)}return (n>>>0).toString(16)+':'+s.length}
 function siteData(s,p){return {project:p,items:s.items.filter(i=>i.projectId===p.id),entries:s.entries.filter(i=>i.projectId===p.id),proofs:s.proofs.filter(i=>i.projectId===p.id)}}
 function replaceSite(state,id,p){const s={...state};for(const k of ['projects','items','entries','proofs']){s[k]=state[k].filter(x=>(k==='projects'?x.id:x.projectId)!==id).concat(k==='projects'?(p.project?[p.project]:[]):p[k]||[])}if(!s.projects.find(x=>x.id===s.selectedProject))s.selectedProject=s.projects[0]?.id||null;return s}
-function putState(s){shadowState=s;applying=true;callbacks?.setState?.(s);setTimeout(()=>{applying=false;shadowState=null},750)}
-function backup(tag){const s=callbacks?.getState?.();if(!s)return;try{write('obracun-safety-'+tag+'-'+Date.now(),s)}catch{throw Error('Backup nije moguće pohraniti. Izvezi sigurnosnu kopiju iz Postavki.') }}
-async function api(path,options={},auth=true,refreshing=false){if(!conf)throw Error('Cloud baza još nije aktivirana.');if(auth&&!refreshing&&session?.expires_at<Date.now()/1000+75)await refresh();const h={'apikey':conf.key,...options.headers};h.Authorization='Bearer '+(auth?session?.access_token:conf.key);if(auth&&!session?.access_token)throw Error('Prijavi se.');const r=await fetch(conf.url+path,{...options,headers:h,cache:'no-store'});if(options.binary){if(!r.ok)throw Error('HTTP '+r.status);return r.blob()}const t=await r.text();let j;try{j=t?JSON.parse(t):null}catch{j=t}if(!r.ok)throw Error(j?.message||j?.msg||j?.error_description||j?.error||'Server HTTP '+r.status);return j}
+function putState(s){
+  // The company's registered name is also the default contractor on every device.
+  if(org()?.name && !s.companyProfile?.name)s={...s,companyProfile:{...(s.companyProfile||{}),name:org().name}};
+  shadowState=s;applying=true;callbacks?.setState?.(s);setTimeout(()=>{applying=false;shadowState=null},750)
+}
+function backup(tag){
+ const s=callbacks?.getState?.();if(!s)return;
+ try{write('obracun-safety-'+tag+'-'+Date.now(),s)}
+ catch{throw Error('Backup nije moguće pohraniti. Izvezi sigurnosnu kopiju iz Postavki.') }
+}
+async function api(path,options={},auth=true,refreshing=false){if(!conf)throw Error('Cloud baza još nije aktivirana.');if(auth&&!refreshing&&session?.expires_at<Date.now()/1000+75)await refresh();const h={'apikey':conf.key,...options.headers};if(auth&&!session?.access_token)throw Error('Prijavi se.');if(auth)h.Authorization='Bearer '+session.access_token;const r=await fetch(conf.url+path,{...options,headers:h,cache:'no-store'});if(options.binary){if(!r.ok)throw Error('HTTP '+r.status);return r.blob()}const t=await r.text();let j;try{j=t?JSON.parse(t):null}catch{j=t}if(!r.ok)throw Error(j?.message||j?.msg||j?.error_description||j?.error||'Server HTTP '+r.status);return j}
 const post=(path,data,auth=true)=>api(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)},auth);
 async function refresh(){if(!session?.refresh_token)throw Error('Prijava je istekla.');const j=await post('/auth/v1/token?grant_type=refresh_token',{refresh_token:session.refresh_token},false);session={...j,expires_at:Math.floor(Date.now()/1000)+(j.expires_in||3600)};write(SS,session)}
 async function signin(email,password,signup){if(!email.trim()||password.length<8)throw Error('Upiši e-mail i lozinku (najmanje 8 znakova).');const j=await post(signup?'/auth/v1/signup':'/auth/v1/token?grant_type=password',{email:email.trim(),password},false);if(!j.access_token){notice('Provjeri e-mail da potvrdiš registraciju, zatim se prijavi.','pending');return}session={...j,expires_at:Math.floor(Date.now()/1000)+(j.expires_in||3600)};write(SS,session);cid=null;write(CS,null);await loadCompanies();notice('Prijavljen','connected')}
