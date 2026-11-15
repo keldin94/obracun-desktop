@@ -50,8 +50,8 @@ function signatures(project){
  return '<div class="signatures">'+block('Sestavil',project.preparedBy,signed)+block('Naročnik',project.clientRepresentative,'')+block('Izvajalec',project.contractorManager,'')+'</div>';
 }
 const css='<style>'+
-'@page{size:A4 portrait;margin:12mm 12mm 12mm 25mm}*{box-sizing:border-box}body{font:10px/1.3 Arial,sans-serif;color:#1b2835;background:#dce4ed;margin:0}'+
-'.page{background:white;width:210mm;min-height:297mm;margin:0 auto 16px;padding:12mm 12mm 12mm 25mm;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}'+
+'@page{size:A4 portrait;margin:7mm 7mm 7mm 20mm}*{box-sizing:border-box}body{font:10px/1.3 Arial,sans-serif;color:#1b2835;background:#dce4ed;margin:0}'+
+'.page{background:white;width:210mm;min-height:297mm;margin:0 auto 16px;padding:7mm 7mm 7mm 20mm;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}'+
 '.book-head{font-weight:bold;text-align:center;margin-bottom:6px;font-size:12px}.top,.bar,.measure{width:100%;border-collapse:collapse;table-layout:fixed}'+
 '.top td,.bar td{border:1px solid #283541;padding:4px 5px;vertical-align:top;word-wrap:break-word}.top strong{display:block;font-size:10px}.th,.bar small{display:block;font-size:8px;color:#607084}'+
 '.bar td{font-size:9px}.parties{font-size:8px;color:#556b7d;margin:4px 0 6px}.notes{margin-top:4px;color:#536478;font-size:8px;white-space:pre-wrap}'+
@@ -66,14 +66,14 @@ const css='<style>'+
 '.sign b{font-size:9px}.sign small{font-size:7px;color:#657687}.sign-line{height:13mm;border-bottom:1px dotted #adb8c3;display:flex;align-items:flex-end;justify-content:center;position:relative}.sign-line span{font-size:9px}.ink{max-width:90%;max-height:12mm;object-fit:contain;position:absolute;bottom:2px;left:5%}'+
 '.cover h1{font-size:22px;margin-bottom:10mm}.cover h2{font-size:15px}.cover table{border-collapse:collapse;width:100%;margin-top:9mm}.cover th,.cover td{padding:6px;border:1px solid #cbd5e1}.cover th{background:#eef3f6}'+
 '@media screen{body{padding:14px}.page{box-shadow:0 3px 16px #182b3d30}}@media print{body{padding:0;background:white}.page{margin:0;width:auto;min-height:0;padding:0;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}}'+
-/* Physical A4 preview shows the binding margin; print fills 173x273mm safe content. */
-'.page.sheet{display:flex;flex-direction:column;width:210mm;height:297mm;min-height:297mm;padding:12mm 12mm 12mm 25mm;overflow:visible}'+
+/* Physical A4 preview reserves 20mm for binding and 7mm on the other edges. */
+'.page.sheet{display:flex;flex-direction:column;width:210mm;height:297mm;min-height:297mm;padding:7mm 7mm 7mm 20mm;overflow:visible}'+
 '.page.sheet .book-head,.page.sheet .top,.page.sheet .bar,.page.sheet .parties{flex:0 0 auto}'+
 '.page.sheet .ledger{flex:1 1 auto;min-height:0;align-self:stretch}'+
 '.page.sheet .main{min-height:0}'+
 '.page.sheet .subtotal{margin-top:auto}'+
 '.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:0;border-top:0}'+
-'@media print{.page.sheet{width:173mm;height:273mm;min-height:273mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
+'@media print{.page.sheet{width:183mm;height:283mm;min-height:283mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
 '.page.sheet .ledger{flex:1 1 auto;min-height:0}.page.sheet .signatures{flex:0 0 25mm}}'+
 '</style>';
 async function buildReport({project,items,entries,proofs,month,half=1,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName='',getFile,fileToDataUrl}){
@@ -82,8 +82,8 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
  const chosen=(items||[]).filter(it=>it.projectId===project.id&&(!included.size||included.has(it.id))&&(!setGroups.size||setGroups.has(it.group)));
  const selected=chosen.filter(it=>includeEmpty||(entries||[]).some(e=>e.itemId===it.id&&P.belongs(e,project,month,half)));
  if(!selected.length)throw Error('Za izbrano obdobje ni izmer. Izberi tudi prazne liste.');
- const currentLabel=P.label(project,month,half,P.frequency(project)===1),old=P.previous(project,month,half);
- const previousLabel=P.label(project,old.month,old.half,false);
+ const currentLabel=P.label(project,month,half),old=P.previous(project,month,half);
+ const previousLabel=P.label(project,old.month,old.half);
  const allItems=(items||[]).filter(it=>it.projectId===project.id);
  let sheets='',summary='',total=0;
  for(const it of selected){
@@ -115,7 +115,7 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
     return '<figure style="flex:0 0 '+Math.min(100,Math.max(45,wide))+'%"><img src="'+data+'" style="max-height:'+Math.min(110,Math.max(35,mm))+'mm" alt="'+esc(p.caption||p.filename)+'"/><figcaption>'+esc(p.caption||p.filename)+'</figcaption></figure>';
    }).join('');
    sheets+='<section class="page sheet" data-item="'+esc(it.id)+'" data-list="'+bookNo+'" data-page="'+(i+1)+'">'+
-    '<div class="book-head">OBRAČUNSKI LIST št. '+bookNo+' · Stran '+(i+1)+' / '+planned.length+' · Obračun: '+esc(currentLabel)+'</div>'+
+    '<div class="book-head">OBRAČUNSKI LIST št. '+bookNo+' · Stran '+(i+1)+'</div>'+
     '<table class="top"><tr><td style="width:25%"><span class="th">Objekt</span><strong>'+esc(project.name)+'</strong>'+esc(project.location||'')+
     '<div class="notes">Obračunski načrt: '+esc(project.planRef||'—')+'</div></td>'+
     '<td style="width:51%"><span class="th">Opis del – Postavka</span><strong>'+esc(it.code+' '+it.name)+'</strong>'+
