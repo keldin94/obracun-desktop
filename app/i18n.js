@@ -6,6 +6,7 @@
 'use strict';
 const KEY='obracun-ui-language';
 const lex={
+'Unesi naziv projekta':'Vnesi naziv projekta',
 'Gradilišta':'Gradbišča','Gradilište':'Gradbišče','Novo gradilište':'Novo gradbišče','Kreiraj gradilište':'Ustvari gradbišče',
 'Promijeni gradilište':'Zamenjaj gradbišče','Podaci gradilišta':'Podatki gradbišča','Aktivno gradilište':'Aktivno gradbišče',
 'AKTIVNO GRADILIŠTE':'AKTIVNO GRADBIŠČE','Nema gradilišta':'Ni gradbišč',
