@@ -94,6 +94,19 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    await page.locator('.ob-measure-grandtotal').getByText(/330,994/).waitFor({timeout:5000});
    assert.deepEqual(failures,[],'Page errors in quantity and reinforcement editors');
 
+   await page.getByRole('button',{name:/Shrani izmero|Spremi izmjeru/}).first().click();
+   await page.locator('.drawer').waitFor({state:'detached',timeout:7000});
+   assert.equal(await page.locator('.items-table').count(),1,'After save should return to popis');
+   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('obracun-webapp-v1')));
+   assert.ok(saved.entries.length===1,'The measurement must be stored');
+   assert.ok(Math.abs(saved.entries[0].quantity-330.994)<0.00001,'Stored quantity mismatch');
+   await page.locator('.items-table tbody tr').nth(1).click();
+   await page.getByRole('button',{name:/Izvozi ta list|Izvezi ovaj list/}).click();
+   await page.getByText('Dodaj druge postavke v isti PDF').waitFor({timeout:5000});
+   assert.ok(await page.locator('.ob-export-choice').count()>=2,'Missing selectable other sheets');
+   assert.deepEqual(failures,[],'Errors after saving and opening PDF selection');
+
+
    console.log('PASS: real React UI rendered, click works, no browser errors.');
  }finally{
    if(browser)await browser.close();
