@@ -159,7 +159,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "OBRAČUN v0.3.9: V glavi obračunskega lista ob Naročnik/Izvajalec je dodan Obračun za obdobje (mesec/leto oziroma polovica meseca). A4 list ima 25 mm levi rob za luknjanje in arhiviranje v gradbeno knjigo ter 12 mm desni, zgornji in spodnji rob. Predogled pokaže celoten list A4 210 × 297 mm; tisk upošteva uporabno površino 173 × 273 mm. Odstranjena je podvojena črta nad podpisi: meja pod Mesečna je samo ena, brez dodatnega razmaka. Preverjeno s testom predogleda in PDF. Podatki in sinhronizacija so ohranjeni. Naredi varnostno kopijo pred nadgradnjo."
+            --notes "OBRAČUN v0.3.10: A4 obračunski list ima 20 mm levi rob za vezavo in 7 mm zgornji, spodnji ter desni rob. Predogled ostane A4 210 × 297 mm, tiskana vsebina meri 183 × 283 mm. Glava vsebuje samo številko obračunskega lista in tekočo številko strani, brez obdobja ali zapisa 1/3. Meseci so povsod izpisani s polnim imenom in polno letnico, npr. November 2026; obdobje ostane ob podatkih Naročnik in Izvajalec. Podatki in sinhronizacija so ohranjeni."
 
   windows-installer-smoke:
     needs: desktop-release
