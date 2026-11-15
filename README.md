@@ -111,3 +111,11 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 - Iz posamezne postavke lahko izbereš tudi druge postavke za izvoz v isti PDF; vedno gre le za trenutno obračunsko obdobje. Levo spodaj je števec predvidenih strani za odprto postavko.
 
 **Pozor:** število strani se načrtuje glede na vrstice in skice; pri izjemno dolgih opisih lahko tiskalnik/PDF upravljalnik dodatno prelomi stran. Pred oddajo vedno preveri predogled tiska. Stare podatkovne strukture niso izbrisane.
+
+### OBRAČUN v0.3.8 — kompaktne vrstice in celostranski A4 obračun
+
+- Ko je vrstica izmere skrčena, so vsa njena polja in formula res skrita. Ostane en sam vodoravni povzetek z nazivom, količino in puščico. **Odstrani vrstico** je vedno viden v glavi, ne glede na stanje vrstice.
+- Pri odstranitvi trenutno odprte vrstice se samodejno odpre naslednja, če obstaja.
+- A4 obračunski list ima vedno enako veliko območje **Skice, izmere, izračuni**, tudi brez skic. Območje se razteza do podpisov; podpisi so znova poravnani ob spodnjem robu uporabnega območja strani.
+- Obračunski prikaz na zaslonu in pri tiskanju uporabljata iste dimenzije tiskalne površine A4: 186 × 277 mm pri robovih 12 mm levo/desno in 10 mm zgoraj/spodaj. Datum, račun, podpis in druge vrednosti ostanejo nespremenjene.
+- Samodejni testi z brskalnikom preverjajo celotno skrčenje vrstice, razpoložljivost brisanja, višino okvirja, položaj podpisov ter ujemanje predogleda s tiskanim PDF.

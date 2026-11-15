@@ -159,7 +159,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "OBRAČUN v0.3.7: Generični naziv oznake, izmera je odprta že ob vstopu, nova vrstica zgoraj in prejšnja skrčena, po shranjevanju vrnitev na popis. Ločen obračun enkrat ali dvakrat mesečno (1.–15., 16.–konec) s pravilnim prenosom. A4 list ima zaporedno številko iz izvirnega popisa in št. strani; numerične formule, natančno poravnane spremenljive stolpce, tekoči mesec in prejšnje obdobje, le mesečni seštevek pri dnu in manjši razmik do podpisov. Podpora podpisu sestavljavca, predogledu števila strani in izbiri dodatnih postavk v istem PDF. Ohranitev cloud podatkov. Pred posodobitvijo izvozi varnostno kopijo."
+            --notes "OBRAČUN v0.3.8: A4 obračunski list sada ima istu radnu površinu pune visine i kad nema skica; okvir se proteže do zone potpisa, dok su potpisi ponovo fiksirani na dnu stranice. Pregled i PDF ispis koriste jednaku A4 geometriju. Minimizarana vrstica u editoru potpuno skriva dimenzije i formule, prikazuje samo naslov, količinu i strelicu, uz stalno vidljivo dugme Odstrani vrstico na istoj liniji. Očuvani su podaci, cloud, formule i periodični obračuni. Napravi backup prije nadogradnje."
 
   windows-installer-smoke:
     needs: desktop-release
