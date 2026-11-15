@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	appVersion      = "0.3.3"
+	appVersion      = "0.3.4"
 	listenAddress   = "127.0.0.1:17861"
 	defaultRepo     = "keldin94/obracun-desktop"
 	executableAsset = "Obracun-Windows.exe"
