@@ -66,6 +66,15 @@ const css='<style>'+
 '.sign b{font-size:9px}.sign small{font-size:7px;color:#657687}.sign-line{height:13mm;border-bottom:1px dotted #adb8c3;display:flex;align-items:flex-end;justify-content:center;position:relative}.sign-line span{font-size:9px}.ink{max-width:90%;max-height:12mm;object-fit:contain;position:absolute;bottom:2px;left:5%}'+
 '.cover h1{font-size:22px;margin-bottom:10mm}.cover h2{font-size:15px}.cover table{border-collapse:collapse;width:100%;margin-top:9mm}.cover th,.cover td{padding:6px;border:1px solid #cbd5e1}.cover th{background:#eef3f6}'+
 '@media screen{body{padding:14px}.page{box-shadow:0 3px 16px #182b3d30}}@media print{body{padding:0;background:white}.page{margin:0;width:auto;min-height:0;padding:0;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}}'+
+/* An A4 sheet fills the entire available 277mm print area. Preview and print use the same geometry. */
+'.page.sheet{display:flex;flex-direction:column;width:186mm;height:277mm;min-height:277mm;padding:0;overflow:visible}'+
+'.page.sheet .book-head,.page.sheet .top,.page.sheet .bar,.page.sheet .parties{flex:0 0 auto}'+
+'.page.sheet .ledger{flex:1 1 auto;min-height:0;align-self:stretch}'+
+'.page.sheet .main{min-height:0}'+
+'.page.sheet .subtotal{margin-top:auto}'+
+'.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:2.5mm}'+
+'@media print{.page.sheet{width:186mm;height:277mm;min-height:277mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
+'.page.sheet .ledger{flex:1 1 auto;min-height:0}.page.sheet .signatures{flex:0 0 25mm}}'+
 '</style>';
 async function buildReport({project,items,entries,proofs,month,half=1,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName='',getFile,fileToDataUrl}){
  if(!project?.id)throw Error('Izberi gradbišče.');
