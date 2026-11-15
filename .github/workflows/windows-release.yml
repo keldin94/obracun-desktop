@@ -45,7 +45,10 @@ jobs:
           node --check app/i18n.js
           node --check app/measurement-editor.js
           node --check app/engineering.js
-          node --test app/tests/engineering.test.cjs
+          node --check app/periods.js
+          node --check app/report-v2.js
+          node --check app/signature-pad.js
+          node --test app/tests/engineering.test.cjs app/tests/periods-report.test.cjs
           node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
           python3 -m json.tool app/cloud-config.json >/dev/null
           test -s supabase/002_organizations.sql
