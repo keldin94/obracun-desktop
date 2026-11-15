@@ -30,8 +30,8 @@ test('Period 1 and 2 of November split at the 15th; old data preserved',()=>{
  assert.equal(P.belongs(entries[1],project,'2026-11',2),false);
  assert.equal(P.belongs(entries[2],project,'2026-11',2),true);
  assert.equal(P.before(entries[1],project,'2026-11',2),true);
- assert.equal(P.label(project,'2026-11',1),'November \'26/1');
- assert.equal(P.label({billingFrequency:1},'2026-11',1,true),"Nov '26");
+ assert.equal(P.label(project,'2026-11',1),'November 2026/1');
+ assert.equal(P.label({billingFrequency:1},'2026-11',1,true),'November 2026');
 });
 test('Original index from all popis items determines sheet number',()=>{
  assert.equal(P.listPosition(items[2],items),3);
@@ -41,9 +41,10 @@ test('PDF for a single selected popis position keeps list no 3, labels, aligned 
  const html=await E.buildReport({project,items,entries,proofs:[],month:'2026-11',half:2,
    groups:['Betonska dela'],selectedIds:['i3'],includeSummary:false,
    getFile:async()=>null,fileToDataUrl:async()=>null});
- assert.ok(html.includes('OBRAČUNSKI LIST št. 3 · Stran 1 / 1'),html.slice(0,600));
- assert.ok(html.includes("Obračun: November &#39;26/2"),'Period label');
- assert.ok(html.includes("Prenos: November &#39;26/1"),'Previous period');
+ assert.ok(html.includes('OBRAČUNSKI LIST št. 3 · Stran 1</div>'),html.slice(0,600));
+ assert.ok(!html.includes('Stran 1 / 1'),'No total page count in sheet header');
+ assert.ok(html.includes('Obračun: November 2026/2'),'Period label');
+ assert.ok(html.includes('Prenos: November 2026/1'),'Previous period');
  assert.ok(html.includes('>14,00</')===false,'Quantity is tested with exact 8');
  assert.ok(html.includes('>8,00<'),'Current quantity');
  assert.ok(html.includes('>18,00<'),'Cumulative quantity');
@@ -52,10 +53,12 @@ test('PDF for a single selected popis position keeps list no 3, labels, aligned 
  assert.ok(html.includes('1 × 3 × 1 × 1')&&html.includes('3 × 2 × 2 × 1'),'Full numeric formulas for both rows');
  assert.ok(html.indexOf('1 × 3 × 1 × 1')<html.indexOf('3 × 2 × 2 × 1'),'Older row is first');
  assert.ok(html.includes('class="ink"'),'Blue signature included');
- assert.ok(html.includes('Obračun za obdobje: <strong>November &#39;26/2</strong>'),
+ assert.ok(html.includes('Obračun za obdobje: <strong>November 2026/2</strong>'),
     'Period must appear alongside Naročnik and Izvajalec');
- assert.ok(html.includes('@page{size:A4 portrait;margin:12mm 12mm 12mm 25mm}'),
-    'A4 print must reserve 25mm on the binding edge');
+ assert.ok(html.includes('@page{size:A4 portrait;margin:7mm 7mm 7mm 20mm}'),
+    'A4 print must reserve 20mm on the binding edge and 7mm elsewhere');
+ assert.ok(html.includes('width:183mm;height:283mm;min-height:283mm'),
+    'Printable A4 content must match the new margin dimensions');
  assert.ok(html.includes('.page.sheet{display:flex;flex-direction:column;width:210mm;height:297mm'),
     'Preview must show the entire physical A4 paper');
  assert.ok(html.includes('.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:0;border-top:0}'),
@@ -69,6 +72,7 @@ test('Print pages are deterministically split and individually numbered',async()
  measurements:[{_seq:1,a:'1',b:'1',c:'1',kos:'1',mode:'cubic'}]}));
  const html=await E.buildReport({project,items,entries:many,proofs:[],month:'2026-11',half:2,
    selectedIds:['i3'],includeSummary:false,getFile:async()=>null,fileToDataUrl:async()=>null});
- assert.ok(html.includes('Stran 1 / 3')&&html.includes('Stran 2 / 3')&&html.includes('Stran 3 / 3'));
+ assert.ok(html.includes('Stran 1</div>')&&html.includes('Stran 2</div>')&&html.includes('Stran 3</div>'));
+ assert.ok(!/Stran [1-9]+\s*\//.test(html),'Do not show total page count');
  assert.equal((html.match(/class="page sheet"/g)||[]).length,3);
 });
