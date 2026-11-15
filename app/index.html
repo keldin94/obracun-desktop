@@ -1068,7 +1068,7 @@ function App() {
                     React.createElement(window.OBR_COLLAGE.LivePreview,{
                       item:record,project,items,entries,proofs,month,half,getFile,fileToDataUrl,
                       onPrint:()=>startExport(record.id)
-                    }))),
+                    })))),
         React.createElement("input", { ref: importInput, type: "file", hidden: true, accept: ".xlsx,.csv,.xlsm", onChange: e => loadImport(e.target.files?.[0]) }),
         React.createElement("input", { ref: backupInput, type: "file", hidden: true, accept: ".json,application/json", onChange: e => restoreBackup(e.target.files?.[0]) }),
         modal === 'new-project' && React.createElement(Dialog, { title: "Novi projekt", onClose: () => setModal(null) },
