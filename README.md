@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.3 — Windows i macOS Intel
+# OBRAČUN v0.3.4 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -62,10 +62,10 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 ### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
 U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
 
-### Fix v0.3.3 — white startup screen
+### Fix v0.3.4 — white startup screen
 React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at build time and served offline. The old embedded React 16 libraries (without hooks) were removed. GitHub Actions now runs a real Chromium UI smoke test before publishing an installer. To build from source, run `npm install && npm run build:runtime && go test ./... && go build .`. Existing user data stays in the same profile.
 
-## v0.3.3 — Slobodni obračunski izrazi i izgled lista
+## v0.3.4 — Slobodni obračunski izrazi i izgled lista
 
 - Slobodne formule po redu koriste simbole a,b,c,h,d,q,r,t,kos i dodatna slova s vrijednostima; znak x ili * označava množenje, a zagrade određuju redoslijed. Podržani su +,−,×,÷; izračun se čuva punom preciznošću.
 - Posebno polje **Pozicije armature** ostaje uz izmjeru i ispisuje se u proračunu.
@@ -74,3 +74,18 @@ React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at 
 - Dokaznice imaju slobodan naziv, rotaciju po stepenu i izbor veličine na papiru. Slike se rotiraju u canvasu pri ispisu, bez ručnog uređivanja izvornog nacrta.
 - Na svakom listu su **Mesečna** (tekući mjesec) i **Skupna** (prethodno + tekući) desne kolone; PDF prikaz ostaje optimiziran za A4.
 - Ako ima mnogo priloga/dimenzija, ispis može zahtijevati dodatnu stranicu kako bi sve ostalo čitljivo.
+
+## OBRAČUN Cloud — v0.3.4
+
+**Cloud je centralno povezan** s namjenskim Supabase projektom `obracun` u regiji Frankfurt. Korisnici ne unose URL ni API ključeve.
+
+1. Na Windowsu prvo sačuvaj lokalni backup kroz **Postavke i backup → Izvezi backup**.
+2. Otvori **Firma i korisnici**, registruj se e-mailom i lozinkom te potvrdi e-mail ako je potrebno.
+3. Prijavi se i **kreiraj firmu**. Prvi korisnik postaje vlasnik.
+4. Izaberi **Prenesi lokalne obračune**; provjeri poruku *Sinhronizovano* i otvaranje svih priloženih slika i PDF-ova.
+5. Na Macu se prijavi istom e-mail adresom i lozinkom; odaberi istu firmu. Trebalo bi da se automatski učitaju ista gradilišta i obračuni.
+6. Administrator kreira pozivnice za korisnike s ulogama owner/admin/editor/viewer i ograničenim pristupom gradilištima.
+
+Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka s drugog uređaja radi u intervalima do 30 sekundi. Ako se isti projekt izmijeni na dva uređaja odjednom, aplikacija zaustavlja prepisivanje i javlja konflikt, koji trenutno treba ručno riješiti.
+
+**Ograničenja:** Supabase Free nema automatske dnevne backupove i može pauzirati projekt nakon neaktivnosti. Za poslovnu upotrebu redovno izvezi vlastite sigurnosne kopije. Cloud sinhronizacija stvarnog korisničkog naloga treba završnu provjeru na Windowsu i Macu.
