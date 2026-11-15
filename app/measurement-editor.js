@@ -16,7 +16,7 @@ function blankRow(unit,seq=1){
 function MeasurementRows({form,setForm,unit}){
  const rows=Array.isArray(form.measurements)?form.measurements:[];
  const inputs=React.useRef({});
- const [expandedSeq,setExpandedSeq]=React.useState(()=>rows.length?(rows[0]._seq??0):null);
+ const [expandedSeq,setExpandedSeq]=React.useState(()=>rows.length?(rows[0]._seq??rows.length):null);
  const unitType=isSteel(unit)?'steel':isVolume(unit)?'volume':isArea(unit)?'area':isPieces(unit)?'pieces':'other';
  const update=next=>setForm({...form,measurements:next,expression:E.mathExpression(next)});
  const patch=(i,changes)=>update(rows.map((r,j)=>i===j?{...r,...changes}:r));
@@ -26,7 +26,7 @@ function MeasurementRows({form,setForm,unit}){
   const seq=Math.max(0,...rows.map((r,i)=>Number.isFinite(Number(r._seq))?Number(r._seq):(i+1)))+1;
   const row=blankRow(unit,seq);
   setExpandedSeq(seq);
-  update([row,...rows.map((r,i)=>r._seq===undefined?{...r,_seq:rows.length-i}:r)]);
+  update([row,...rows.map((r,i)=>r._seq===undefined?{...r,_seq:i+1}:r)]);
  };
  const fld=(row,i,key,label,opt={})=>h('label',{key,className:'measure-field',
     style:{minWidth:opt.width||'112px',flex:opt.flex||'1 1 105px'}},
