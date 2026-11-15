@@ -47,6 +47,11 @@ jobs:
           node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
           python3 -m json.tool app/cloud-config.json >/dev/null
           test -s supabase/002_organizations.sql
+      - name: Verify Supabase cloud and anonymous access isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/smoke-cloud.cjs
       - name: Browser smoke test (must render real app, not a white screen)
         shell: bash
         run: |
@@ -149,7 +154,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.3.3: Slobodne formule koriste dimenzije a,b,c,h,d,q,r,t,kos i dodatne varijable; opombe ispod postavke, oznake armature, naziv firme, dokazi s naslovom i proizvoljnom rotacijom/veličinom. A4 list s uspravnim Mesečna/Skupna kolonama. Obračuni se čuvaju u korisničkom profilu. Backup prije prve provjere."
+            --notes "v0.3.4: Centralni cloud za OBRAČUN je povezan. Registracija, firme, pozivnice, pristup po gradilištu i automatska sinhronizacija između Windowsa i Maca. Sačuvaj lokalni backup prije migracije i prvo prebaci podatke sa računara gdje su obračuni. Supabase Free nema automatske backupove; sinhronizacija stvarnih naloga zahtijeva završni test na dva uređaja."
 
   windows-installer-smoke:
     needs: desktop-release
