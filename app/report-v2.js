@@ -50,8 +50,8 @@ function signatures(project){
  return '<div class="signatures">'+block('Sestavil',project.preparedBy,signed)+block('Naročnik',project.clientRepresentative,'')+block('Izvajalec',project.contractorManager,'')+'</div>';
 }
 const css='<style>'+
-'@page{size:A4 portrait;margin:10mm 12mm}*{box-sizing:border-box}body{font:10px/1.3 Arial,sans-serif;color:#1b2835;background:#dce4ed;margin:0}'+
-'.page{background:white;width:186mm;min-height:277mm;margin:0 auto 16px;padding:8mm 5mm;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}'+
+'@page{size:A4 portrait;margin:12mm 12mm 12mm 25mm}*{box-sizing:border-box}body{font:10px/1.3 Arial,sans-serif;color:#1b2835;background:#dce4ed;margin:0}'+
+'.page{background:white;width:210mm;min-height:297mm;margin:0 auto 16px;padding:12mm 12mm 12mm 25mm;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}'+
 '.book-head{font-weight:bold;text-align:center;margin-bottom:6px;font-size:12px}.top,.bar,.measure{width:100%;border-collapse:collapse;table-layout:fixed}'+
 '.top td,.bar td{border:1px solid #283541;padding:4px 5px;vertical-align:top;word-wrap:break-word}.top strong{display:block;font-size:10px}.th,.bar small{display:block;font-size:8px;color:#607084}'+
 '.bar td{font-size:9px}.parties{font-size:8px;color:#556b7d;margin:4px 0 6px}.notes{margin-top:4px;color:#536478;font-size:8px;white-space:pre-wrap}'+
@@ -66,14 +66,14 @@ const css='<style>'+
 '.sign b{font-size:9px}.sign small{font-size:7px;color:#657687}.sign-line{height:13mm;border-bottom:1px dotted #adb8c3;display:flex;align-items:flex-end;justify-content:center;position:relative}.sign-line span{font-size:9px}.ink{max-width:90%;max-height:12mm;object-fit:contain;position:absolute;bottom:2px;left:5%}'+
 '.cover h1{font-size:22px;margin-bottom:10mm}.cover h2{font-size:15px}.cover table{border-collapse:collapse;width:100%;margin-top:9mm}.cover th,.cover td{padding:6px;border:1px solid #cbd5e1}.cover th{background:#eef3f6}'+
 '@media screen{body{padding:14px}.page{box-shadow:0 3px 16px #182b3d30}}@media print{body{padding:0;background:white}.page{margin:0;width:auto;min-height:0;padding:0;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}}'+
-/* An A4 sheet fills the entire available 277mm print area. Preview and print use the same geometry. */
-'.page.sheet{display:flex;flex-direction:column;width:186mm;height:277mm;min-height:277mm;padding:0;overflow:visible}'+
+/* Physical A4 preview shows the binding margin; print fills 173x273mm safe content. */
+'.page.sheet{display:flex;flex-direction:column;width:210mm;height:297mm;min-height:297mm;padding:12mm 12mm 12mm 25mm;overflow:visible}'+
 '.page.sheet .book-head,.page.sheet .top,.page.sheet .bar,.page.sheet .parties{flex:0 0 auto}'+
 '.page.sheet .ledger{flex:1 1 auto;min-height:0;align-self:stretch}'+
 '.page.sheet .main{min-height:0}'+
 '.page.sheet .subtotal{margin-top:auto}'+
-'.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:2.5mm}'+
-'@media print{.page.sheet{width:186mm;height:277mm;min-height:277mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
+'.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:0;border-top:0}'+
+'@media print{.page.sheet{width:173mm;height:273mm;min-height:273mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
 '.page.sheet .ledger{flex:1 1 auto;min-height:0}.page.sheet .signatures{flex:0 0 25mm}}'+
 '</style>';
 async function buildReport({project,items,entries,proofs,month,half=1,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName='',getFile,fileToDataUrl}){
@@ -127,7 +127,7 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
     '<td><small>Cena na enoto</small><b>'+money(it.unitPrice)+'</b></td>'+
     '<td><small>Obračun: '+esc(currentLabel)+'</small><b>'+num(value)+' '+esc(it.unit)+'</b></td>'+
     '<td><small>Skupna</small><b>'+num(cum)+' '+esc(it.unit)+'</b></td></tr></table>'+
-    '<div class="parties">Naročnik: '+esc(project.client||'—')+' &nbsp; | &nbsp; Izvajalec: '+esc(project.contractor||companyName||'—')+'</div>'+
+    '<div class="parties">Naročnik: '+esc(project.client||'—')+' &nbsp; | &nbsp; Izvajalec: '+esc(project.contractor||companyName||'—')+' &nbsp; | &nbsp; Obračun za obdobje: <strong>'+esc(currentLabel)+'</strong></div>'+
     '<div class="ledger"><div class="main">'+
     '<div class="ledger-title"><span>Skice, izmere, izračuni</span><span>Prenos: '+esc(previousLabel)+' · '+num(previous)+' '+esc(it.unit)+'</span></div>'+
     tableOf(page.rows,allLines,it.unit)+(pictures?'<div class="figures">'+pictures+'</div>':'')+
