@@ -83,7 +83,7 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    }
    await page.locator('.ob-measure-grandtotal').getByText(/32,765|32\.765/).waitFor();
    await page.locator('.ob-formula-input').fill('a*(b+c)*2kos');
-   await page.locator('.ob-measure-grandtotal').getByText(/331,0|331\.0/).waitFor({timeout:3000}).catch(()=>{});
+   await page.locator('.ob-measure-grandtotal').getByText(/330,994/).waitFor({timeout:5000});
    assert.deepEqual(failures,[],'Page errors in quantity and reinforcement editors');
 
    console.log('PASS: real React UI rendered, click works, no browser errors.');
