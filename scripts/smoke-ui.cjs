@@ -133,6 +133,9 @@ if(!expectedVersion)throw Error('Version not found in main.go');
        return {
          pageHeight:p.height,ledgerHeight:l.height,signaturesHeight:s.height,
          signatureBottomGap:p.bottom-s.bottom,workToSignatureGap:s.top-l.bottom,
+         leftBindingMargin:l.left-p.left,rightPaperMargin:p.right-l.right,
+         signatureTopBorder:parseFloat(getComputedStyle(signatures).borderTopWidth),
+         monthSubtotalTopBorder:parseFloat(getComputedStyle(document.querySelector('.page.sheet .subtotal')).borderTopWidth),
          overflow:page.scrollHeight-page.clientHeight
        };
      });
@@ -140,13 +143,22 @@ if(!expectedVersion)throw Error('Version not found in main.go');
      await printPage.setContent(withData,{waitUntil:'load'});
      const populated=await measureLayout();
      assert.ok(populated.ledgerHeight>550,'Work box must occupy most of the printable page: '+JSON.stringify(populated));
-     assert.ok(Math.abs(populated.signatureBottomGap)<4,'Signature is not at page bottom: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.signatureBottomGap-(12*96/25.4))<3,'Preview must show 12mm bottom paper margin: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.leftBindingMargin-(25*96/25.4))<3,'Preview lacks 25mm filing/binding margin: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.rightPaperMargin-(12*96/25.4))<3,'Preview lacks 12mm right margin: '+JSON.stringify(populated));
+     assert.ok(populated.signatureTopBorder===0 && populated.monthSubtotalTopBorder===0,
+       'Duplicate line at the end of measurement work area: '+JSON.stringify(populated));
      assert.ok(populated.workToSignatureGap>=0 && populated.workToSignatureGap<20,'Excess gap between work area and signature: '+JSON.stringify(populated));
      assert.ok(populated.overflow<=3,'Sheet content spills beyond A4: '+JSON.stringify(populated));
      await printPage.emulateMedia({media:'print'});
      const printGeometry=await measureLayout();
-     assert.ok(Math.abs(printGeometry.signatureBottomGap)<4 && Math.abs(populated.ledgerHeight-printGeometry.ledgerHeight)<4,
-       'Screen and print layouts disagree: '+JSON.stringify({populated,printGeometry}));
+     assert.ok(Math.abs(printGeometry.signatureBottomGap)<3 && Math.abs(populated.ledgerHeight-printGeometry.ledgerHeight)<4,
+       'Screen and print content geometry disagree: '+JSON.stringify({populated,printGeometry}));
+     assert.ok(Math.abs(printGeometry.leftBindingMargin)<3 && Math.abs(printGeometry.rightPaperMargin)<3,
+       'Print content should not have a second, duplicate margin: '+JSON.stringify(printGeometry));
+     assert.ok(Math.abs(populated.pageHeight-297*96/25.4)<3 &&
+       Math.abs(printGeometry.pageHeight-273*96/25.4)<3,
+       'Expected A4 preview size and 273mm printable height: '+JSON.stringify({populated,printGeometry}));
      const pdf=await printPage.pdf({preferCSSPageSize:true,printBackground:true});
      assert.ok(pdf.subarray(0,5).toString()==='%PDF-','Printed PDF was not produced');
      await printPage.emulateMedia({media:'screen'});
@@ -154,7 +166,8 @@ if(!expectedVersion)throw Error('Version not found in main.go');
      await printPage.setContent(withoutData,{waitUntil:'load'});
      const empty=await measureLayout();
      assert.ok(Math.abs(populated.ledgerHeight-empty.ledgerHeight)<4,'Empty sheet lost its full-height work area: '+JSON.stringify({populated,empty}));
-     assert.ok(Math.abs(empty.signatureBottomGap)<4,'Signatures moved on an empty sheet: '+JSON.stringify(empty));
+     assert.ok(Math.abs(empty.signatureBottomGap-populated.signatureBottomGap)<3,
+       'Signatures moved on an empty sheet: '+JSON.stringify(empty));
    }finally{
      await printPage.close();
    }
