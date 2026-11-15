@@ -42,6 +42,13 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    await page.getByRole('button',{name:/Novo gradilište/i}).first().click();
    await page.getByPlaceholder(/Unesi naziv projekta/).waitFor({timeout:5000});
    assert.deepEqual(failures,[],'Page errors after opening project form');
+   // Cloud configuration must be built in: no customer-side URL or API key setup.
+   await page.getByRole('button',{name:/Otkaži|Otkazi/i}).first().click();
+   await page.getByRole('button',{name:/Firma i korisnici/i}).first().click();
+   await page.locator('#ob-account-layer').waitFor({state:'visible',timeout:7000});
+   await page.locator('#ob-email').waitFor({state:'visible',timeout:7000});
+   assert.ok(await page.locator('[data-op="signup"]').count()>0,'Cloud registration not available');
+   assert.deepEqual(failures,[],'Page errors in cloud login screen');
    console.log('PASS: real React UI rendered, click works, no browser errors.');
  }finally{
    if(browser)await browser.close();
