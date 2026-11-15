@@ -9,14 +9,14 @@ type WorkspaceProps={
  item:any;proofs:Proof[];entries:any[];project:any;month:string;half:number;
  onChangeItem:(patch:any)=>void;onChangeProof:(id:string,patch:any)=>void;
  onReorder:(ids:string[])=>void;onUpload:()=>void;onOpen:(p:Proof)=>void;onDelete:(p:Proof)=>void;
- getFile:(id:string)=>Promise<Blob|null>;
+ getFile:(id:string)=>Promise<Blob|null>;fileToDataUrl:(file:Blob)=>Promise<string>;stageAspect?:number;
 };
 const h=React.createElement;
 const root:any=window as any;
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 const imageOnly=(p:Proof)=>String(p.mime||'').startsWith('image/');
 const label=(p:Proof)=>p.caption||p.filename||'Skica';
-function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onChangeProof,onReorder,onUpload,onOpen,onDelete,getFile}:WorkspaceProps){
+function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onChangeProof,onReorder,onUpload,onOpen,onDelete,getFile,fileToDataUrl,stageAspect}:WorkspaceProps){
  const periodProofs=proofs.filter(p=>(!p.month||p.month===month)&&
   (root.OBR_PERIODS.frequency(project)===1||!p.billingHalf||Number(p.billingHalf)===half));
  const pictures=periodProofs.filter(imageOnly);
@@ -40,11 +40,17 @@ function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onC
  React.useEffect(()=>{
   let alive=true;const values:Record<string,string>={};
   Promise.all(pictures.map(async p=>{
-   try{const file=await getFile(p.id);if(file&&alive)values[p.id]=URL.createObjectURL(file)}
-   catch{}
-  })).then(()=>{if(alive)setUrls(values);else Object.values(values).forEach(url=>URL.revokeObjectURL(url))});
-  return ()=>{alive=false;Object.values(values).forEach(url=>URL.revokeObjectURL(url))};
- },[pictures.map(p=>p.id).join('|')]);
+   try{
+    const file=await getFile(p.id);
+    if(file&&alive){
+     let uri=await fileToDataUrl(file);
+     if(root.OBR_ENGINEERING.rotateImageData)uri=await root.OBR_ENGINEERING.rotateImageData(uri,p.rotation||0);
+     if(alive)values[p.id]=uri;
+    }
+   }catch{}
+  })).then(()=>{if(alive)setUrls(values)});
+  return ()=>{alive=false};
+ },[pictures.map(p=>p.id+':'+(p.rotation||0)).join('|')]);
  const chooseMode=(next:string)=>{
   if(next==='custom'&&mode!=='custom'){
    for(const [index,list] of pages.entries()){
@@ -126,6 +132,7 @@ function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onC
       className:i===page?'is-active':'',onClick:()=>setActivePage(i)},
       i===0?'Glavni list':'Priloga '+i,' · ',list.length))),
   h('div',{className:'ob-collage-stage',ref:stageRef,
+      style:{aspectRatio:stageAspect||0.85},
       onPointerMove,onPointerUp,onPointerCancel:onPointerUp},
     tiles.map(t=>{
      const b=boxFor(t),p=t.proof;
@@ -134,8 +141,9 @@ function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onC
        onPointerDown:(e:any)=>onPointerDown(e,t,false),
        style:{left:b.x+'%',top:b.y+'%',width:b.w+'%',height:b.h+'%',
         cursor:mode==='custom'?'move':'pointer'}},
-       urls[p.id]?h('img',{src:urls[p.id],alt:label(p)}):h('span',null,label(p)),
-       h('small',null,label(p)),
+       h('div',{className:'ob-stage-content'},
+        urls[p.id]?h('img',{src:urls[p.id],alt:label(p)}):h('span',null,label(p)),
+        h('small',{className:'ob-sketch-caption'},h('span',null,label(p)))),
        mode==='custom'&&h('span',{className:'ob-resize-handle',
          onPointerDown:(e:any)=>onPointerDown(e,t,true),'aria-label':'Spremeni velikost'}));
     }),
@@ -169,8 +177,9 @@ function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onC
  );
 }
 type PreviewProps={item:any;project:any;items:any[];entries:any[];proofs:any[];month:string;half:number;
- getFile:(id:string)=>Promise<Blob|null>;fileToDataUrl:(blob:Blob)=>Promise<string>;onPrint:()=>void};
-function LivePreview({item,project,items,entries,proofs,month,half,getFile,fileToDataUrl,onPrint}:PreviewProps){
+ getFile:(id:string)=>Promise<Blob|null>;fileToDataUrl:(blob:Blob)=>Promise<string>;onPrint:()=>void;
+ onLayoutAspect?:(ratio:number)=>void;};
+function LivePreview({item,project,items,entries,proofs,month,half,getFile,fileToDataUrl,onPrint,onLayoutAspect}:PreviewProps){
  const [html,setHtml]=React.useState<string>('');
  const [problem,setProblem]=React.useState<string>('');
  const [scale,setScale]=React.useState<number>(0.58);
@@ -198,6 +207,10 @@ function LivePreview({item,project,items,entries,proofs,month,half,getFile,fileT
   h('div',{className:'ob-live-paper-scroll'},
     h('div',{className:'ob-live-paper',style:{width:(794*scale)+'px',height:(1123*scale)+'px'}},
       h('iframe',{title:'Predogled obračunskega lista A4',
+       onLoad:(e:any)=>{
+        const box=e.currentTarget?.contentDocument?.querySelector('.page.sheet .collage-box')?.getBoundingClientRect();
+        if(box&&box.width>0&&box.height>0)onLayoutAspect?.(Math.round(box.width/box.height*10000)/10000);
+       },
        srcDoc:html?html.replace('</head>','<style>@media screen{body{padding:0!important}.page{margin:0!important;box-shadow:none!important}}</style></head>'):'<p style="font:12px Arial;padding:20px">Pripravljam predogled...</p>',
        style:{width:'794px',height:'1123px',transform:'scale('+scale+')',transformOrigin:'top left',
         border:0,background:'#fff',pointerEvents:'none'}}))));
