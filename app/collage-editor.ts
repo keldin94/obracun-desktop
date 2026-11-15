@@ -3,7 +3,7 @@
  */
 declare const React:any;
 type Box={x:number;y:number;w:number;h:number;page?:number};
-type Proof={id:string;filename:string;caption?:string;mime?:string;rotation?:number;createdAt?:string;collageOrder?:number;collageBox?:Box;imageWidth?:number;imageHeight?:number};
+type Proof={id:string;filename:string;caption?:string;mime?:string;month?:string;billingHalf?:number;rotation?:number;createdAt?:string;collageOrder?:number;collageBox?:Box;imageWidth?:number;imageHeight?:number};
 type Tile={proof:Proof;box:Box};
 type WorkspaceProps={
  item:any;proofs:Proof[];entries:any[];project:any;month:string;half:number;
@@ -17,8 +17,10 @@ const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 const imageOnly=(p:Proof)=>String(p.mime||'').startsWith('image/');
 const label=(p:Proof)=>p.caption||p.filename||'Skica';
 function ImageWorkspace({item,proofs,entries,project,month,half,onChangeItem,onChangeProof,onReorder,onUpload,onOpen,onDelete,getFile}:WorkspaceProps){
- const pictures=proofs.filter(p=>imageOnly(p)&&(!p.month||p.month===month));
- const other=proofs.filter(p=>!imageOnly(p)&&(!p.month||p.month===month));
+ const periodProofs=proofs.filter(p=>(!p.month||p.month===month)&&
+  (root.OBR_PERIODS.frequency(project)===1||!p.billingHalf||Number(p.billingHalf)===half));
+ const pictures=periodProofs.filter(imageOnly);
+ const other=periodProofs.filter(p=>!imageOnly(p));
  const [selected,setSelected]=React.useState<string>('');
  const [activePage,setActivePage]=React.useState<number>(0);
  const [urls,setUrls]=React.useState<Record<string,string>>({});
@@ -196,7 +198,7 @@ function LivePreview({item,project,items,entries,proofs,month,half,getFile,fileT
   h('div',{className:'ob-live-paper-scroll'},
     h('div',{className:'ob-live-paper',style:{width:(794*scale)+'px',height:(1123*scale)+'px'}},
       h('iframe',{title:'Predogled obračunskega lista A4',
-       srcDoc:html||'<p style="font:12px Arial;padding:20px">Pripravljam predogled...</p>',
+       srcDoc:html?html.replace('</head>','<style>@media screen{body{padding:0!important}.page{margin:0!important;box-shadow:none!important}}</style></head>'):'<p style="font:12px Arial;padding:20px">Pripravljam predogled...</p>',
        style:{width:'794px',height:'1123px',transform:'scale('+scale+')',transformOrigin:'top left',
         border:0,background:'#fff',pointerEvents:'none'}}))));
 }
