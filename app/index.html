@@ -90,6 +90,31 @@ fragment{display:contents}
 .ob-sign-pad-toolbar small{font-size:10px;display:block;color:#6f8497;max-width:350px;margin-top:5px}
 .ob-sign-pad canvas{width:100%;max-width:100%;display:block;aspect-ratio:4/1;max-height:160px;touch-action:none;cursor:crosshair;border:1px dashed #9fb1c2;border-radius:7px;background:white}
 @media(max-width:650px){.ob-sign-pad-toolbar{flex-wrap:wrap}}
+
+/* Entire collapsed row is one line: toggle summary + persistent remove action. */
+.ob-measure-card .ob-row-head{
+  display:flex;align-items:center;flex-wrap:nowrap;gap:10px;margin:0;
+}
+.ob-row-toggle{
+  flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px;
+  padding:8px 6px;background:transparent;border:0;border-radius:7px;
+  cursor:pointer;text-align:left;color:#1a3c58;font-size:13px;
+}
+.ob-row-toggle:hover{background:#f0f6f8}
+.ob-row-toggle strong{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-row-value{flex:0 0 auto;font-weight:700;color:#17806c;white-space:nowrap}
+.ob-row-chevron{flex:0 0 18px;text-align:center;color:#54758a}
+.ob-row-delete{flex:0 0 auto;white-space:nowrap;margin:0;padding:8px 11px}
+.ob-measure-card .ob-expanded-row{margin-top:14px}
+.ob-row-header-fields{display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.ob-row-header-fields .measure-field:first-child{flex:2 1 250px}
+.ob-measure-card.ob-collapsed{padding:9px 13px}
+.ob-measure-card.ob-collapsed .ob-row-head{margin-bottom:0}
+@media(max-width:560px){
+ .ob-row-toggle{gap:7px;padding:6px 0;font-size:12px}
+ .ob-row-delete{padding:7px 8px;font-size:11px}
+ .ob-row-value{font-size:11px}
+}
 </style><style>
 .site-subnav{border-left:1px solid #35526a;margin:11px 0 7px 12px;padding:4px 0 4px 11px}.site-subnav .nav-link{font-size:12px;padding:11px 12px}.site-context-title{font-size:10px;color:#a6c9cd;font-weight:750;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px 11px;max-width:195px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.current-site{padding:5px 10px 18px;display:flex;flex-direction:column;gap:7px}.current-site span{font-size:10px;color:#8aa1b5;letter-spacing:1px}.current-site strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.current-site button{align-self:flex-start;background:none;border:0;color:#86d1bf;padding:2px 0;font-size:11px;text-align:left}.cloud-entry{width:100%;font-family:inherit;text-align:left;cursor:pointer}.brand-mark{background:#176960!important;border-color:#449a92!important}.brand-mark svg{color:white!important}
 

@@ -20,7 +20,15 @@ function MeasurementRows({form,setForm,unit}){
  const unitType=isSteel(unit)?'steel':isVolume(unit)?'volume':isArea(unit)?'area':isPieces(unit)?'pieces':'other';
  const update=next=>setForm({...form,measurements:next,expression:E.mathExpression(next)});
  const patch=(i,changes)=>update(rows.map((r,j)=>i===j?{...r,...changes}:r));
- const erase=i=>update(rows.filter((_,j)=>j!==i));
+ const erase=i=>{
+   const removed=rows[i];
+   const remaining=rows.filter((_,j)=>j!==i);
+   const removedSeq=removed?removed._seq??(rows.length-i):null;
+   if(expandedSeq===removedSeq){
+     setExpandedSeq(remaining.length?(remaining[0]._seq??remaining.length):null);
+   }
+   update(remaining);
+ };
  const defaultMode={steel:'rebar',volume:'cubic',area:'area',pieces:'pieces',other:'length'};
  const add=()=>{
   const seq=Math.max(0,...rows.map((r,i)=>Number.isFinite(Number(r._seq))?Number(r._seq):(i+1)))+1;
@@ -120,16 +128,19 @@ function MeasurementRows({form,setForm,unit}){
   return h('article',{key:seq,className:'ob-measure-card'+(expanded?' ob-expanded':' ob-collapsed')},
     h('header',{className:'ob-row-head'},
       h('button',{type:'button',className:'ob-row-toggle','aria-expanded':expanded,
+         'aria-label':(expanded?'Skrči ':'Razširi ')+(row.label||'Vrstica '+seq),
          onClick:()=>setExpandedSeq(expanded?null:seq)},
          h('strong',null,(row.label||'Vrstica '+seq)),
-         h('span',null,valid?E.num(calculated.result,3)+' '+unit:'Neizpolnjeno'),
-         h('span',null,expanded?'▴':'▾')),
+         h('span',{className:'ob-row-value'},valid?E.num(calculated.result,3)+' '+unit:'Neizpolnjeno'),
+         h('span',{className:'ob-row-chevron','aria-hidden':true},expanded?'▴':'▾')),
+      h('button',{type:'button',className:'btn btn-outline ob-row-delete',
+         onClick:()=>erase(i),'aria-label':'Odstrani vrstico '+seq},
+         'Odstrani vrstico')),
     expanded&&h('div',{className:'ob-expanded-row'},
     h('div',{className:'ob-row-header-fields'},
       fld(row,i,'label','Oznaka / ime dela',{text:true,width:'245px',placeholder:'Naziv oznake (npr. A, B, …)'}),
       h('label',{className:'measure-field ob-sign-field'},h('small',null,'Predznak'),
-       simpleSelect(row.sign||'+',e=>patch(i,{sign:e.target.value}),[['+','+ Prištej'],['-','− Odštej']])),
-      h('button',{type:'button',className:'btn btn-outline',onClick:()=>erase(i)},'Odstrani vrstico'))),
+       simpleSelect(row.sign||'+',e=>patch(i,{sign:e.target.value}),[['+','+ Prištej'],['-','− Odštej']]))),
     steelMode?steel(row,i):
       h('div',{className:'ob-type-specific'},
        unitType==='volume'&&h('label',{className:'measure-field',style:{maxWidth:310}},h('small',null,'Standardna formula'),
