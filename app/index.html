@@ -83,12 +83,12 @@ fragment{display:contents}
 .measure-line-result code{font-size:10px;word-break:break-all}.measure-line-result strong,.measure-total strong{color:#208775}
 .measure-total{justify-content:space-between;border-top:1px solid #cfe1e5;padding-top:8px;margin-top:8px}.measure-remove{padding:4px 9px!important;min-height:28px!important}
 @media(max-width:500px){.measure-line-top .measure-field{flex:1 1 40%}.measure-line-dims .measure-field{flex:1 1 25%}}
-</style></head><body><div id="root"></div><script src="/runtime.js"></script><script src="/cloud.js"></script><script src="/engineering.js"></script><script src="/i18n.js"></script><script src="/measurement-editor.js"></script><script>const KEY = 'obracun-webapp-v1';
+</style></head><body><div id="root"></div><script src="/runtime.js"></script><script src="/cloud.js"></script><script src="/engineering.js"></script><script src="/periods.js"></script><script src="/report-v2.js"></script><script src="/i18n.js"></script><script src="/measurement-editor.js"></script><script src="/signature-pad.js"></script><script>const KEY = 'obracun-webapp-v1';
 const now = () => new Date().toISOString();
 const ym = () => new Date().toISOString().slice(0,7);
 const prev = () => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.toISOString().slice(0,7);};
 const uid = () => (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-function blankData(){return {projects:[],items:[],entries:[],proofs:[],selectedProject:null,selectedMonth:ym(),schemaVersion:3};}
+function blankData(){return {projects:[],items:[],entries:[],proofs:[],selectedProject:null,selectedMonth:ym(),selectedHalf:1,schemaVersion:3};}
 function migrateState(source){
  if(!source || !Array.isArray(source.projects))return blankData();
  const data={...blankData(),...source};
@@ -449,27 +449,34 @@ function App() {
     const projects = state.projects || [];
     const project = projects.find(p => p.id === state.selectedProject) || projects[0] || {id:null,name:'Odaberi gradilište',location:'',client:''};
     const month = state.selectedMonth || nowMonth();
+    const half = project?.billingFrequency===2 && state.selectedHalf===2?2:1;
+    const BILL=window.OBR_PERIODS;
     const items = useMemo(() => state.items.filter(i => i.projectId === project?.id), [state.items, project?.id]);
     const entries = useMemo(() => state.entries.filter(e => e.projectId === project?.id), [state.entries, project?.id]);
     const proofs = useMemo(() => state.proofs.filter(p => p.projectId === project?.id), [state.proofs, project?.id]);
     const groups = useMemo(() => [...new Set(items.map(i => i.group || 'Ostala dela'))], [items]);
     const record = items.find(i => i.id === selectedItem);
-    const allEntryQty = (id) => entries.filter(e => e.itemId === id && e.month <= month).reduce((s, e) => s + e.quantity, 0);
-    const monthlyQty = (id) => entries.filter(e => e.itemId === id && e.month === month).reduce((s, e) => s + e.quantity, 0);
+    const allEntryQty = (id) => entries.filter(e=>e.itemId===id&&BILL.until(e,project,month,half)).reduce((sum,e)=>sum+e.quantity,0);
+    const monthlyQty = (id) => entries.filter(e=>e.itemId===id&&BILL.belongs(e,project,month,half)).reduce((sum,e)=>sum+e.quantity,0);
     const totals = useMemo(() => { let contract = 0, current = 0, cum = 0, count = 0; for (const i of items) {
         contract += i.contractQty * i.unitPrice;
-        const all = entries.filter(e => e.itemId === i.id && e.month <= month).reduce((s, e) => s + e.quantity, 0);
-        const m = entries.filter(e => e.itemId === i.id && e.month === month).reduce((s, e) => s + e.quantity, 0);
+        const all = entries.filter(e=>e.itemId===i.id&&BILL.until(e,project,month,half)).reduce((sum,e)=>sum+e.quantity,0);
+        const m = entries.filter(e=>e.itemId===i.id&&BILL.belongs(e,project,month,half)).reduce((sum,e)=>sum+e.quantity,0);
         current += m * i.unitPrice;
         cum += all * i.unitPrice;
         if (m !== 0)
             count++;
-    } return { contract, current, cum, count }; }, [items, entries, month]);
+    } return { contract, current, cum, count }; }, [items, entries, month, half, project?.billingFrequency]);
     const filtered = useMemo(() => items.filter(i => (group === 'Sve grupe' || i.group === group) && (`${i.code} ${i.name} ${i.group}`).toLowerCase().includes(search.toLowerCase())), [items, group, search]);
     const notify = x => setToast(x);
-    function openItem(id) { setSelectedItem(id); setEditEntry(null); setForm({ date: today(), place: '', description: '', expression: '', note: '',measurements:[] }); }
+    function openItem(id) {
+      const chosen=items.find(it=>it.id===id);
+      setSelectedItem(id);setEditEntry(null);
+      setForm({date:BILL.firstDate(month,half),place:'',description:'',expression:'',note:'',
+        measurements:[window.OBR_newMeasureRow(chosen?.unit||'m³')]});
+    }
     function clearDemo(){notify('Nova instalacija počinje bez probnih podataka. Postojeće uvezene postavke nisu obrisane.');}
-    function startProject() { setProjectDraft({name:'',location:'',client:'',contractor:state.companyProfile?.name||'',planRef:'',costCenter:'',preparedBy:'',clientRepresentative:'',contractorManager:''}); setModal('new-project'); }
+    function startProject() { setProjectDraft({name:'',location:'',client:'',contractor:state.companyProfile?.name||'',planRef:'',costCenter:'',preparedBy:'',preparedSignature:'',billingFrequency:1,clientRepresentative:'',contractorManager:''}); setModal('new-project'); }
     function saveProject(e) { e.preventDefault(); const name = projectDraft.name.trim(); if (!name)
         return; const id = uid(); set(s => ({ projects: [...s.projects, { id, ...projectDraft, name, createdAt: new Date().toISOString() }], selectedProject: id })); setGroup('Sve grupe'); setSelectedItem(null); setProjectScopeOpen(true);setPage('pregled'); setModal(null); notify('Gradilište je kreirano.'); }
     function saveProjectInfo(e) { e.preventDefault(); set(s => ({ projects: s.projects.map(p => p.id === project.id ? { ...p, ...projectDraft } : p) })); setModal(null); notify('Podaci projekta su ažurirani.'); }
@@ -492,7 +499,13 @@ function App() {
     function saveEntry(e) { e.preventDefault(); if (computed === null) {
         notify('Neispravan izraz. Primjer: 2 * 5,25 * 3');
         return;
-    } const id = editEntry || uid(); const val = { ...form, id, itemId: record.id, projectId: project.id, month: form.date?.slice(0, 7) || month, quantity: computed,measurements:form.measurements||[] }; set(s => ({ entries: editEntry ? s.entries.map(x => x.id === id ? val : x) : [...s.entries, val] })); setEditEntry(null); setForm({ date: `${month}-01`, place: '', description: '', expression: '', note: '',measurements:[] }); notify(editEntry ? 'Izmjera je izmijenjena.' : 'Izmjera je spremljena.'); }
+    } const id = editEntry || uid(); const p=BILL.fromDate(form.date,project);
+    const val={...form,id,itemId:record.id,projectId:project.id,month:p.month||month,
+      billingHalf:p.half,quantity:computed,measurements:form.measurements||[]}; set(old=>({entries:editEntry?old.entries.map(x=>x.id===id?val:x):[...old.entries,val],
+      selectedMonth:p.month||month,selectedHalf:p.half}));
+    setEditEntry(null);setSelectedItem(null);setPage('popis');setProjectScopeOpen(true);
+    setForm({date:BILL.firstDate(month,half),place:'',description:'',expression:'',note:'',measurements:[]});
+    notify(editEntry?'Izmera je spremenjena.':'Izmera je shranjena.'); }
     function startEditEntry(e) { setEditEntry(e.id); setForm({ date: e.date, place: e.place, description: e.description, expression: e.expression, note: e.note || '',measurements:e.measurements||[] }); }
     function deleteEntry(id) { if (!window.confirm('Izbrisati ovu izmjeru?'))
         return; set(s => ({ entries: s.entries.filter(e => e.id !== id) })); if (editEntry === id)
@@ -544,7 +557,7 @@ function App() {
             }
             const id = uid();
             await putFile(id, file);
-            set(s => ({ proofs: [...s.proofs, { id, projectId: project.id, itemId: record.id, filename: file.name, caption:file.name.replace(/\.[^.]+$/, ''),rotation:0,widthPercent:0,maxHeightMm:0,mime: file.type || 'application/octet-stream', size: file.size, month, createdAt: new Date().toISOString() }] }));
+            set(s => ({ proofs: [...s.proofs, { id, projectId: project.id, itemId: record.id, filename: file.name, caption:file.name.replace(/\.[^.]+$/, ''),rotation:0,widthPercent:0,maxHeightMm:0,mime: file.type || 'application/octet-stream', size: file.size, month, billingHalf:half, createdAt: new Date().toISOString() }] }));
             count++;
         }
         notify(`Dodano dokaznica: ${count}.`);
@@ -639,9 +652,9 @@ function App() {
     const progress = totals.contract ? Math.round(totals.cum / totals.contract * 100) : 0;
     const allProofsForItem = record ? proofs.filter(p => p.itemId === record.id) : [];
     const lineEntries = record ? entries.filter(e => e.itemId === record.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
-    const recordPrevious = record ? entries.filter(e => e.itemId === record.id && e.month < month).reduce((s, e) => s + e.quantity, 0) : 0;
+    const recordPrevious = record ? entries.filter(e=>e.itemId===record.id&&BILL.before(e,project,month,half)).reduce((s, e) => s + e.quantity, 0) : 0;
     const recordCurrent = record ? monthlyQty(record.id) : 0;
-    const currentFirst = entries.filter(e => e.month === month).slice().sort((a, b) => b.date.localeCompare(a.date));
+    const currentFirst = entries.filter(e=>BILL.belongs(e,project,month,half)).slice().sort((a, b) => b.date.localeCompare(a.date));
     return React.createElement("div", { className: "app-shell" },
         React.createElement("aside", { className: 'sidebar ' + (sidebar ? 'sidebar-show' : '') },
             React.createElement("div", { className: "brand" },
@@ -684,6 +697,12 @@ function App() {
                     React.createElement("div", { className: "month-picker" },
                         React.createElement(CalendarDays, { size: 17 }),
                         React.createElement("input", { "aria-label": "Mjesec obra\u010Duna", type: "month", value: month, onChange: e => set({ selectedMonth: e.target.value }) })),
+                    projectScopeOpen&&project?.billingFrequency===2&&React.createElement('select',{
+                      'aria-label':'Obračunsko obdobje',value:half,
+                      onChange:e=>set({selectedHalf:Number(e.target.value)}),
+                      style:{minHeight:35,border:'1px solid #d6e1eb',borderRadius:8,padding:'0 9px',background:'white'}
+                    },React.createElement('option',{value:1},"1.–15. ("+BILL.label(project,month,1)+")"),
+                       React.createElement('option',{value:2},"16.–konec ("+BILL.label(project,month,2)+")")),
                     projectScopeOpen&&React.createElement("button", { className: "btn btn-outline desktop-only", onClick: () => importInput.current?.click() },
                         React.createElement(Upload, { size: 16 }),
                         " Uvoz Excela"),
@@ -960,16 +979,16 @@ function App() {
                             React.createElement("button", { type: "submit", disabled: computed === null, className: "btn btn-primary" },
                                 React.createElement(Save, { size: 16 }),
                                 editEntry ? 'Spremi izmjenu' : 'Spremi izmjeru'),
-                            editEntry && React.createElement("button", { type: "button", className: "btn btn-outline", onClick: () => { setEditEntry(null); setForm({ date: today(), place: '', description: '', expression: '', note: '',measurements:[] }); } }, "Otka\u017Ei"))),
+                            editEntry && React.createElement("button", { type: "button", className: "btn btn-outline", onClick: () => { setEditEntry(null); setForm({date:BILL.firstDate(month,half),place:'',description:'',expression:'',note:'',measurements:[window.OBR_newMeasureRow(record.unit)]}); } }, "Otka\u017Ei"))),
                     React.createElement("div", { className: "drawer-section-title history-heading" },
                         React.createElement("h3", null, "Historija obra\u010Duna"),
                         React.createElement("span", null,
                             lineEntries.length,
                             " unosa")),
-                    React.createElement("div", { className: "history-list" }, lineEntries.length ? lineEntries.map(e => React.createElement("div", { key: e.id, className: 'history-entry ' + (e.month === month ? '' : 'older') },
+                    React.createElement("div", { className: "history-list" }, lineEntries.length ? lineEntries.map(e => React.createElement("div", { key: e.id, className: 'history-entry ' + (BILL.belongs(e,project,month,half)?'':'older') },
                         React.createElement("div", { className: "history-top" },
                             React.createElement("b", null, e.place || e.description || 'Izmjera'),
-                            React.createElement("span", null, monthLabel(e.month))),
+                            React.createElement('span',null,BILL.label(project,e.month,BILL.entryMoment(e,project).half))),
                         React.createElement("div", { className: "history-meta" },
                             e.date,
                             " \u00B7 ",
