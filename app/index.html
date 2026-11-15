@@ -71,6 +71,18 @@ fragment{display:contents}
 .ob-measure-grandtotal{display:flex;justify-content:space-between;gap:15px;padding:13px 17px;background:#e9f7f3;border-radius:10px;font-size:14px;color:#165d52}
 .ob-measure-grandtotal strong{font-size:17px}
 @media(max-width:680px){.drawer{width:100vw;max-width:100vw}.drawer-head,.drawer-body{padding:14px}.ob-measure-card{padding:12px}.ob-formula-heading span{display:none}}
+
+.ob-page-preview{position:fixed;z-index:37;bottom:24px;left:22px;width:250px;max-height:48vh;overflow-y:auto;border:1px solid #d9e5ed;border-radius:12px;padding:14px;background:white;box-shadow:0 8px 32px #142b4638;display:grid;gap:8px}
+.ob-page-preview>b{font-size:13px;color:#1b3b57}.ob-page-preview>small{font-size:11px;color:#61768a}
+.ob-thumbnails{display:flex;overflow-x:auto;gap:8px;padding-bottom:3px}
+.ob-thumbnails button{min-width:80px;height:98px;border:1px solid #d9e1e8;background:#fafcfd;border-radius:5px;font-size:10px;display:flex;flex-direction:column;justify-content:center;gap:5px;color:#2f5874;cursor:pointer}
+.ob-thumbnails button span{font-weight:750}.ob-thumbnails button small{font-size:9px;color:#8293a6}
+.ob-page-preview>.btn{justify-content:center}
+.ob-export-others{margin-top:12px}.ob-export-others h3{font-size:13px;margin:5px 0}.ob-export-others p{font-size:11px;color:#718498;margin:5px 0 10px}
+.ob-export-list{border:1px solid #dfe8ef;border-radius:9px;max-height:240px;overflow-y:auto;padding:8px}
+.ob-export-choice{display:flex;gap:8px;align-items:center;padding:6px 3px;font-size:11px;border-bottom:1px solid #e8edf2}
+.ob-export-choice span{flex:1}.ob-export-choice small{font-size:10px;color:#8798aa}
+@media(max-width:1200px){.ob-page-preview{display:none}}
 </style><style>
 .site-subnav{border-left:1px solid #35526a;margin:11px 0 7px 12px;padding:4px 0 4px 11px}.site-subnav .nav-link{font-size:12px;padding:11px 12px}.site-context-title{font-size:10px;color:#a6c9cd;font-weight:750;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px 11px;max-width:195px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.current-site{padding:5px 10px 18px;display:flex;flex-direction:column;gap:7px}.current-site span{font-size:10px;color:#8aa1b5;letter-spacing:1px}.current-site strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.current-site button{align-self:flex-start;background:none;border:0;color:#86d1bf;padding:2px 0;font-size:11px;text-align:left}.cloud-entry{width:100%;font-family:inherit;text-align:left;cursor:pointer}.brand-mark{background:#176960!important;border-color:#449a92!important}.brand-mark svg{color:white!important}
 
@@ -368,8 +380,8 @@ function showMonthlyPrintPreview(html){
   return shell;
 }
 
-async function exportMonthlyPDF({project,items,entries,proofs,month,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName=''}){
-  const html=await window.OBR_ENGINEERING.buildReport({project,items,entries,proofs,month,groups,selectedIds,includeEmpty,includeSummary,companyName,getFile,fileToDataUrl});
+async function exportMonthlyPDF({project,items,entries,proofs,month,half=1,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName=''}){
+  const html=await window.OBR_ENGINEERING.buildReport({project,items,entries,proofs,month,half,groups,selectedIds,includeEmpty,includeSummary,companyName,getFile,fileToDataUrl});
   showMonthlyPrintPreview(html);
 }
 
@@ -417,6 +429,7 @@ function App() {
     const [exportGroup, setExportGroup] = useState('Sve grupe');
     const [exportGroups,setExportGroups]=useState([]);
     const [exportSingle,setExportSingle]=useState(null);
+    const [exportSelectedIds,setExportSelectedIds]=useState([]);
     const [exportIncludeEmpty,setExportIncludeEmpty]=useState(false);
     const [exportSummary,setExportSummary]=useState(true);
     const [groupSearch,setGroupSearch]=useState('');
@@ -591,9 +604,11 @@ function App() {
     async function startExport(singleId=null) { if (!items.length) {
         notify('Najprije dodaj ili uvezi postavke.');
         return;
-    } setExportGroups(groups.slice()); setExportSingle(typeof singleId==='string'?singleId:null);setExportIncludeEmpty(false);setExportSummary(true); setModal('export'); }
+    } setExportGroups(groups.slice());setExportSingle(typeof singleId==='string'?singleId:null);
+    setExportSelectedIds(typeof singleId==='string'?[singleId]:[]);
+    setExportIncludeEmpty(false);setExportSummary(typeof singleId!=='string'); setModal('export'); }
     async function doExport() { setBusy(true); try {
-        await exportMonthlyPDF({ project, items, entries, proofs, month, groups:exportGroups,selectedIds:exportSingle?[exportSingle]:[],includeEmpty:exportIncludeEmpty,includeSummary:exportSummary,companyName:state.companyProfile?.name||'' });
+        await exportMonthlyPDF({ project, items, entries, proofs, month, groups:exportGroups,selectedIds:exportSingle?exportSelectedIds:[],half,includeEmpty:exportIncludeEmpty,includeSummary:exportSummary,companyName:state.companyProfile?.name||'' });
         setModal(null);
         notify('Pregled je spreman. Klikni Ispiši / Spremi kao PDF.');
     }
@@ -898,6 +913,19 @@ function App() {
                 React.createElement("div", { className: "footer-note" }, "OBRAČUN · v0.3.6 · Građevinski obračuni"))),
         record && React.createElement(React.Fragment, null,
             React.createElement("div", { className: "drawer-overlay", onClick: () => setSelectedItem(null) }),
+            React.createElement('aside',{className:'ob-page-preview'},
+              React.createElement('b',null,'Obračunski list št. '+BILL.listPosition(record,items)),
+              React.createElement('small',null,BILL.label(project,month,half,project.billingFrequency!==2)),
+              React.createElement('div',{className:'ob-thumbnails'},
+                BILL.planPages(entries.filter(e=>e.itemId===record.id&&BILL.belongs(e,project,month,half)),
+                  proofs.filter(p=>p.itemId===record.id&&(!p.month||p.month===month))).map((p,j)=>
+                  React.createElement('button',{key:j,type:'button',title:'Predogled strani '+(j+1),
+                    onClick:()=>startExport(record.id)},
+                    React.createElement('span',null,'Stran '+(j+1)),
+                    React.createElement('small',null,(p.rows.length||0)+' vrstic · '+p.images.length+' skic')))),
+              React.createElement('button',{type:'button',className:'btn btn-outline',onClick:()=>startExport(record.id)},
+                 'Predogled / Izvozi PDF')),
+            
             React.createElement("aside", { className: "drawer",onPaste:e=>{const files=Array.from(e.clipboardData?.items||[]).filter(i=>i.type?.startsWith('image/')).map(i=>i.getAsFile()).filter(Boolean);if(files.length){e.preventDefault();attach(files.map((f,i)=>new File([f],`Skica-${new Date().toISOString().slice(0,10)}-${i+1}.png`,{type:f.type||'image/png'})));}} },
                 React.createElement("div", { className: "drawer-head" },
                     React.createElement("div", null,
@@ -1152,9 +1180,23 @@ function App() {
         [...new Set([it.group,...window.OBR_ENGINEERING.GROUPS])].map(g=>React.createElement('option',{key:g,value:g},g)))))),
   React.createElement('div',{className:'modal-actions'},React.createElement('button',{className:'btn btn-outline',onClick:()=>setModal(null)},'Zatvori'))),
         modal==='import'&&importState&&React.createElement(ImportWizard,{value:importState,setValue:setImportState,project,onConfirm:applyImport,onClose:()=>setModal(null)}),
-        modal === 'export' && React.createElement(Dialog, { title: 'Izvoz obračunskih listova u PDF', onClose: () => setModal(null) },
-  React.createElement('p',{style:{color:'#64748b',fontSize:12}},project.name,' · ',monthLabel(month),exportSingle?' · Samo jedna postavka':''),
-  !exportSingle&&React.createElement('div',{style:{border:'1px solid #e0e8ef',padding:12,borderRadius:8,marginTop:12,maxHeight:190,overflowY:'auto'}},
+        modal === 'export' && React.createElement(Dialog, { title: 'Izvoz obračunskih listova u PDF', wide:!!exportSingle, onClose: () => setModal(null) },
+  React.createElement('p',{style:{color:'#64748b',fontSize:12}},project.name,' · ',BILL.label(project,month,half,project.billingFrequency!==2),exportSingle?' · Izbrane postavke':''),
+  !!exportSingle&&React.createElement('section',{className:'ob-export-others'},
+    React.createElement('h3',null,'Dodaj druge postavke v isti PDF'),
+    React.createElement('p',null,'Izvozi se samo izbrano obračunsko obdobje, ne prejšnji obračuni.'),
+    React.createElement('label',{style:{display:'block',marginBottom:8}},
+      React.createElement('input',{type:'checkbox',
+        checked:exportSelectedIds.length===items.filter(it=>it.projectId===project.id).length,
+        onChange:e=>setExportSelectedIds(e.target.checked?items.map(it=>it.id):[exportSingle])}),
+      ' Vse postavke'),
+    React.createElement('div',{className:'ob-export-list'},
+      items.map(it=>React.createElement('label',{key:it.id,className:'ob-export-choice'},
+        React.createElement('input',{type:'checkbox',checked:exportSelectedIds.includes(it.id),
+          onChange:e=>setExportSelectedIds(old=>e.target.checked?[...new Set([...old,it.id])]:old.filter(x=>x!==it.id))}),
+        React.createElement('span',null,it.code+' · '+it.name),
+        React.createElement('small',null,BILL.belongs(entries.find(e=>e.itemId===it.id&&BILL.belongs(e,project,month,half))||{},project,month,half)?'Vnesene izmere':'Brez izmer'))))),
+    !exportSingle&&React.createElement('div',{style:{border:'1px solid #e0e8ef',padding:12,borderRadius:8,marginTop:12,maxHeight:190,overflowY:'auto'}},
    React.createElement('b',null,'Odaberi jednu, više ili sve grupe radova'),
    React.createElement('label',{style:{display:'block',marginTop:8}},React.createElement('input',{type:'checkbox',checked:exportGroups.length===groups.length,onChange:e=>setExportGroups(e.target.checked?groups.slice():[])}),' Sve grupe'),
    groups.map(g=>React.createElement('label',{key:g,style:{display:'block',marginTop:7}},React.createElement('input',{type:'checkbox',checked:exportGroups.includes(g),onChange:e=>setExportGroups(p=>e.target.checked?[...new Set([...p,g])]:p.filter(x=>x!==g))}),' ',g))),
@@ -1163,7 +1205,7 @@ function App() {
   React.createElement('div',{style:{fontSize:11,color:'#68758a',marginTop:12}},'Svaki list sadrži A4 zaglavlje, mjesečnu i kumulativnu količinu, tabelu dimenzija, formule, priložene slike i potpise. PDF dokaznice su zasad navedene kao prilog, ali nisu fizički spojene.'),
   React.createElement('div',{className:'modal-actions'},
     React.createElement('button',{className:'btn btn-outline',onClick:()=>setModal(null)},'Otkaži'),
-    React.createElement('button',{className:'btn btn-primary',disabled:busy||(!exportSingle&&!exportGroups.length),onClick:doExport},React.createElement(Download,{size:16}),' Pregled / Spremi PDF'))),
+    React.createElement('button',{className:'btn btn-primary',disabled:busy||(exportSingle?!exportSelectedIds.length:!exportGroups.length),onClick:doExport},React.createElement(Download,{size:16}),' Pregled / Spremi PDF'))),
         modal === 'settings' && React.createElement(Dialog, { title: "Postavke i sigurnosna kopija", onClose: () => setModal(null) },
             React.createElement("div", { className: "settings-items" },
                 React.createElement('div',{className:'settings-block'},
