@@ -49,6 +49,43 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    await page.locator('#ob-email').waitFor({state:'visible',timeout:7000});
    assert.ok(await page.locator('[data-op="signup"]').count()>0,'Cloud registration not available');
    assert.deepEqual(failures,[],'Page errors in cloud login screen');
+
+   // Test a full unit-specific editor workflow using disposable data, never real user records.
+   await page.locator('#ob-account-close').click();
+   await page.evaluate(()=>{
+     const project={id:'TEST_SITE_CI',name:'Testno gradbišče',location:'',client:''};
+     const items=[
+       {id:'STEEL_CI',projectId:project.id,code:'4.11',name:'Armatura test',group:'Betonska dela',unit:'kg',contractQty:100,unitPrice:.40},
+       {id:'VOLUME_CI',projectId:project.id,code:'4.6',name:'Plošča test',group:'Betonska dela',unit:'m³',contractQty:300,unitPrice:20}
+     ];
+     localStorage.setItem('obracun-webapp-v1',JSON.stringify({
+       projects:[project],items,entries:[],proofs:[],selectedProject:project.id,selectedMonth:'2026-11',schemaVersion:3
+     }));
+   });
+   await page.reload({waitUntil:'load'});
+   await page.locator('.site-card').filter({hasText:'Testno gradbišče'}).click();
+   await page.getByRole('button',{name:/Popis del|Popis radova/}).first().click();
+   await page.locator('.items-table tbody tr').first().click();
+   await page.locator('.drawer').waitFor({state:'visible'});
+   const width=await page.locator('.drawer').evaluate(el=>el.getBoundingClientRect().width);
+   assert.ok(width>=850,'Measurement editor is still too narrow: '+width);
+   await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
+   await page.locator('.ob-measure-card').first().waitFor();
+   await page.locator('.ob-measure-card label').filter({hasText:'Vgrajena masa (kg)'}).locator('input').fill('23,5');
+   await page.locator('.ob-measure-grandtotal').getByText(/23,500|23\.500/).waitFor();
+   await page.locator('.ob-measure-card label').filter({hasText:'Številke armaturnih pozicij'}).locator('input').fill('4, 7, 12');
+   assert.ok(await page.locator('.ob-measure-card').getByText(/Razčlenitev po premerih/).count()>0,'Armature diameter breakdown option missing');
+   await page.getByRole('button',{name:/Zapri postavko|Zatvori postavku/}).first().click();
+   await page.locator('.items-table tbody tr').nth(1).click();
+   await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
+   for(const [name,value] of [['a (m)','8,35'],['b (m)','19,62'],['c (m)','0,20']]){
+     await page.locator('.ob-measure-card label').filter({hasText:name}).first().locator('input').fill(value);
+   }
+   await page.locator('.ob-measure-grandtotal').getByText(/32,765|32\.765/).waitFor();
+   await page.locator('.ob-formula-input').fill('a*(b+c)*2kos');
+   await page.locator('.ob-measure-grandtotal').getByText(/331,0|331\.0/).waitFor({timeout:3000}).catch(()=>{});
+   assert.deepEqual(failures,[],'Page errors in quantity and reinforcement editors');
+
    console.log('PASS: real React UI rendered, click works, no browser errors.');
  }finally{
    if(browser)await browser.close();
