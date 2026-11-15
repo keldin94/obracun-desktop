@@ -49,6 +49,16 @@ function signatures(project){
  function block(t,name,img){return '<div class="sign"><b>'+esc(t)+'</b><div class="sign-line">'+(img||'')+'<span>'+esc(name||'')+'</span></div><small>Ime in priimek, podpis</small></div>'}
  return '<div class="signatures">'+block('Sestavil',project.preparedBy,signed)+block('Naročnik',project.clientRepresentative,'')+block('Izvajalec',project.contractorManager,'')+'</div>';
 }
+
+function renderCollage(tiles,imageCache){
+ if(!tiles.length)return '';
+ const figures=tiles.map(({proof:p,box:b})=>{
+  const src=imageCache[p.id],title=esc(p.caption||p.filename||'Skica');
+  if(!src)return '<div class="collage-cell" style="left:'+b.x+'%;top:'+b.y+'%;width:'+b.w+'%;height:'+b.h+'%"><small>Priloga: '+title+'</small></div>';
+  return '<figure class="collage-cell" style="left:'+b.x+'%;top:'+b.y+'%;width:'+b.w+'%;height:'+b.h+'%"><img src="'+src+'" alt="'+title+'"/><figcaption>'+title+'</figcaption></figure>';
+ }).join('');
+ return '<div class="collage-box">'+figures+'</div>';
+}
 const css='<style>'+
 '@page{size:A4 portrait;margin:7mm 7mm 7mm 20mm}*{box-sizing:border-box}body{font:10px/1.3 Arial,sans-serif;color:#1b2835;background:#dce4ed;margin:0}'+
 '.page{background:white;width:210mm;min-height:297mm;margin:0 auto 16px;padding:7mm 7mm 7mm 20mm;page-break-after:always;break-after:page}.page:last-child{break-after:auto;page-break-after:auto}'+
@@ -61,7 +71,7 @@ const css='<style>'+
 '.measure th,.measure td{border-bottom:1px solid #dce5ee;padding:5px 3px;vertical-align:top;font-size:8px}.measure th{background:#edf1f5;overflow-wrap:anywhere;text-align:left}'+
 '.measure .number{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.measure .formula{overflow-wrap:anywhere;word-break:break-word}.measure small{display:block;color:#5b6e80;font-size:7px;margin-top:2px}'+
 '.subtotal{border-top:0;text-align:right;margin-top:auto;padding:6px 0;font-weight:bold}.subtotal b{margin-left:12px}'+
-'.figures{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:5px}.figures figure{margin:0;break-inside:avoid;min-width:0}.figures img{max-width:100%;width:100%;object-fit:contain;display:block;border:1px solid #dbe5ed}.figures figcaption{font-size:8px;text-align:center;color:#4c6174;margin-top:3px}'+
+'.collage-box{position:relative;width:100%;flex:1 1 auto;min-height:30mm;overflow:hidden;margin-top:5px}.collage-cell{position:absolute;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:1mm}.collage-cell img{display:block;object-fit:contain;width:100%;height:calc(100% - 11px);min-height:0}.collage-cell figcaption{flex:0 0 11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:7px;color:#536478}.collage-cell small{font-size:8px;color:#607084}.attachment-note{font:italic 8px/1.3 Arial,sans-serif;color:#536478;padding:2mm 0 0}.page.appendix{height:297mm;min-height:297mm;display:flex;flex-direction:column}.appendix-meta{font-size:9px;color:#566b7e;border-bottom:1px solid #ced9e4;padding:3mm 0 4mm}.appendix-title{font-size:13px;font-weight:700;text-align:center}.appendix-body{min-height:0;flex:1 1 auto;display:flex;flex-direction:column;border:1px solid #d6e0ea;margin-top:5mm;padding:4mm}.appendix-body .collage-box{min-height:0;margin:0;flex:1 1 auto}.appendix-footer{text-align:center;font-size:8px;color:#637587;margin-top:3mm}'+
 '.signatures{display:flex;border:1px solid #293542;margin-top:6mm;min-height:25mm}.sign{width:33.333%;padding:5px;border-right:1px solid #293542;text-align:center;display:flex;flex-direction:column;justify-content:space-between}.sign:last-child{border:0}'+
 '.sign b{font-size:9px}.sign small{font-size:7px;color:#657687}.sign-line{height:13mm;border-bottom:1px dotted #adb8c3;display:flex;align-items:flex-end;justify-content:center;position:relative}.sign-line span{font-size:9px}.ink{max-width:90%;max-height:12mm;object-fit:contain;position:absolute;bottom:2px;left:5%}'+
 '.cover h1{font-size:22px;margin-bottom:10mm}.cover h2{font-size:15px}.cover table{border-collapse:collapse;width:100%;margin-top:9mm}.cover th,.cover td{padding:6px;border:1px solid #cbd5e1}.cover th{background:#eef3f6}'+
@@ -73,7 +83,7 @@ const css='<style>'+
 '.page.sheet .main{min-height:0}'+
 '.page.sheet .subtotal{margin-top:auto}'+
 '.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:0;border-top:0}'+
-'@media print{.page.sheet{width:183mm;height:283mm;min-height:283mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
+'@media print{.page.sheet,.page.appendix{width:183mm;height:283mm;min-height:283mm;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}'+
 '.page.sheet .ledger{flex:1 1 auto;min-height:0}.page.sheet .signatures{flex:0 0 25mm}}'+
 '</style>';
 async function buildReport({project,items,entries,proofs,month,half=1,groups=[],selectedIds=[],includeEmpty=false,includeSummary=true,companyName='',getFile,fileToDataUrl}){
@@ -95,7 +105,9 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
   summary+='<tr><td>'+esc(it.code)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.group)+'</td><td>'+esc(it.unit)+'</td><td>'+num(value)+'</td><td>'+money(value*E.n(it.unitPrice))+'</td></tr>';
   const pr=(proofs||[]).filter(p=>p.itemId===it.id&&(!p.month||p.month===month)&&
      (P.frequency(project)===1||!p.billingHalf||Number(p.billingHalf)===Number(half)));
-  const planned=P.planPages(current,pr),allLines=linesFor(current);
+  const planned=P.planPages(current,[]),allLines=linesFor(current);
+  const collage=root.OBR_COLLAGE_LAYOUT.planImages(pr,it,allLines.length);
+  const otherProofs=pr.filter(p=>!String(p.mime||'').startsWith('image/'));
   const imageCache={};
   for(const file of pr.filter(p=>String(p.mime||'').startsWith('image/'))){
    try{
@@ -108,12 +120,7 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
   const bookNo=P.listPosition(it,allItems);
   for(let i=0;i<planned.length;i++){
    const page=planned[i],isLast=i===planned.length-1;
-   const pictures=page.images.map(p=>{
-    const data=imageCache[p.id];if(!data)return '<small>'+esc(p.caption||p.filename)+' (priloga)</small>';
-    const wide=Number(p.widthPercent)|| (page.images.length===1?100:49);
-    const mm=Number(p.maxHeightMm)|| (page.images.length===1?95:70);
-    return '<figure style="flex:0 0 '+Math.min(100,Math.max(45,wide))+'%"><img src="'+data+'" style="max-height:'+Math.min(110,Math.max(35,mm))+'mm" alt="'+esc(p.caption||p.filename)+'"/><figcaption>'+esc(p.caption||p.filename)+'</figcaption></figure>';
-   }).join('');
+   const pictures=i===0?renderCollage(collage.main,imageCache):'';
    sheets+='<section class="page sheet" data-item="'+esc(it.id)+'" data-list="'+bookNo+'" data-page="'+(i+1)+'">'+
     '<div class="book-head">OBRAČUNSKI LIST št. '+bookNo+' · Stran '+(i+1)+'</div>'+
     '<table class="top"><tr><td style="width:25%"><span class="th">Objekt</span><strong>'+esc(project.name)+'</strong>'+esc(project.location||'')+
@@ -130,12 +137,22 @@ async function buildReport({project,items,entries,proofs,month,half=1,groups=[],
     '<div class="parties">Naročnik: '+esc(project.client||'—')+' &nbsp; | &nbsp; Izvajalec: '+esc(project.contractor||companyName||'—')+' &nbsp; | &nbsp; Obračun za obdobje: <strong>'+esc(currentLabel)+'</strong></div>'+
     '<div class="ledger"><div class="main">'+
     '<div class="ledger-title"><span>Skice, izmere, izračuni</span><span>Prenos: '+esc(previousLabel)+' · '+num(previous)+' '+esc(it.unit)+'</span></div>'+
-    tableOf(page.rows,allLines,it.unit)+(pictures?'<div class="figures">'+pictures+'</div>':'')+
-    (page.others.length?'<div class="attachment">Druge priloge: '+esc(page.others.map(p=>p.caption||p.filename).join(', '))+'</div>':'')+
+    tableOf(page.rows,allLines,it.unit)+pictures+
+    (i===0&&collage.appendices.length?'<div class="attachment-note">Dodatne skice so prikazane v prilogah k temu obračunskemu listu.</div>':'')+
+    (i===0&&otherProofs.length?'<div class="attachment-note">Druge priloge (PDF): '+esc(otherProofs.map(p=>p.caption||p.filename).join(', '))+'</div>':'')+
     (isLast?'<div class="subtotal">Mesečna: <b>'+num(value)+' '+esc(it.unit)+'</b></div>':'')+
     '</div><div class="side"><h3>Mesečna</h3><b>'+num(value)+'<br/>'+esc(it.unit)+'</b><small>Obračun:<br/>'+esc(currentLabel)+'</small></div>'+
     '<div class="side"><h3>Skupna</h3><b>'+num(cum)+'<br/>'+esc(it.unit)+'</b><small>Prejšnje: '+num(previous)+'</small></div></div>'+
     signatures(project)+'</section>';
+  }
+  for(let a=0;a<collage.appendices.length;a++){
+   const tiles=collage.appendices[a];
+   sheets+='<section class="page appendix" data-item="'+esc(it.id)+'" data-appendix="'+(a+1)+'">'+
+    '<div class="appendix-title">PRILOGA K OBRAČUNSKEMU LISTU št. '+bookNo+' · Stran '+(a+1)+'</div>'+
+    '<div class="appendix-meta">'+esc(project.name)+' · '+esc(it.code+' '+it.name)+' · '+esc(currentLabel)+'</div>'+
+    '<div class="appendix-body">'+renderCollage(tiles,imageCache)+'</div>'+
+    '<div class="appendix-footer">Priloga k obračunskemu listu št. '+bookNo+' — ni samostojen obračunski list.</div>'+
+    '</section>';
   }
  }
  const cover=includeSummary?'<section class="page cover"><h1>KNJIGA OBRAČUNSKIH IZMER</h1><h2>'+esc(project.name)+'</h2>'+
