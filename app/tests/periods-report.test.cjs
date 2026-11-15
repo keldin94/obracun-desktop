@@ -90,3 +90,14 @@ test('Extra sketches become linked appendix pages instead of new invoice sheets'
  assert.ok(html.includes('PRILOGA K OBRAČUNSKEMU LISTU št. 3 · Stran 1'));
  assert.ok(html.includes('Dodatne skice so prikazane v prilogah'));
 });
+
+test('Image captions stay attached directly beneath the sketch on the printable A4 collage',async()=>{
+ const proof={id:'image01',projectId:'p',itemId:'i3',month:'2026-11',billingHalf:2,
+  filename:'image01.png',caption:'Skica s kotami',mime:'image/png',collageBox:{x:8,y:4,w:51,h:64,page:1}};
+ const html=await E.buildReport({project,items,entries,proofs:[proof],month:'2026-11',half:2,
+  selectedIds:['i3'],includeSummary:false,getFile:async()=>({}),
+  fileToDataUrl:async()=> 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg=='});
+ assert.ok(html.includes('class="collage-content"><img'),'Image and caption need a common layout wrapper');
+ assert.ok(html.includes('<figcaption><span>Skica s kotami</span></figcaption>'),'Label must directly follow the image');
+ assert.ok(html.includes('figcaption::before')&&html.includes('figcaption::after'),'Decorative lines must flank the image label');
+});
