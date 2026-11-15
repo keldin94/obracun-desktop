@@ -218,8 +218,9 @@ const t=value=>{
  return translation==null?value:before+translation+after;
 };
 document.documentElement.lang=lang();
-const orig=React.createElement;
-React.createElement=function(tag,props,...children){
+const baseReact=window.React;
+const orig=baseReact.createElement;
+window.React={...baseReact,createElement:function(tag,props,...children){
   const next=props?{...props}:{};
   if(next){
     for(const key of ['placeholder','title','aria-label','alt']){
@@ -230,7 +231,7 @@ React.createElement=function(tag,props,...children){
     }
   }
   return orig.call(this,tag,next,...children.map(c=>typeof c==='string'?t(c):c));
-};
+}};
 function translateCloud(root){
  if(!root||lang()!=='sl')return;
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
