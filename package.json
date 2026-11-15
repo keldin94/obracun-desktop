@@ -1,10 +1,10 @@
 {
   "name": "keldin-obracun-desktop-runtime",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "private": true,
   "description": "Offline browser UI runtime used by the Windows and macOS desktop executables",
   "scripts": {
-    "build:runtime": "esbuild app/runtime-entry.js --bundle --minify --format=iife --platform=browser --target=chrome110 --outfile=app/runtime.bundle.js",
+    "build:runtime": "esbuild app/runtime-entry.js --bundle --minify --format=iife --platform=browser --target=chrome110 --outfile=app/runtime.bundle.js && esbuild app/collage-editor.ts --bundle --minify --format=iife --platform=browser --target=chrome110 --outfile=app/collage.bundle.js",
     "test:ui": "node scripts/smoke-ui.cjs"
   },
   "dependencies": {
