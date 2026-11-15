@@ -83,7 +83,7 @@ fragment{display:contents}
 .measure-line-result code{font-size:10px;word-break:break-all}.measure-line-result strong,.measure-total strong{color:#208775}
 .measure-total{justify-content:space-between;border-top:1px solid #cfe1e5;padding-top:8px;margin-top:8px}.measure-remove{padding:4px 9px!important;min-height:28px!important}
 @media(max-width:500px){.measure-line-top .measure-field{flex:1 1 40%}.measure-line-dims .measure-field{flex:1 1 25%}}
-</style></head><body><div id="root"></div><script src="/runtime.js"></script><script src="/cloud.js"></script><script src="/engineering.js"></script><script src="/measurement-editor.js"></script><script>const KEY = 'obracun-webapp-v1';
+</style></head><body><div id="root"></div><script src="/runtime.js"></script><script src="/cloud.js"></script><script src="/engineering.js"></script><script src="/i18n.js"></script><script src="/measurement-editor.js"></script><script>const KEY = 'obracun-webapp-v1';
 const now = () => new Date().toISOString();
 const ym = () => new Date().toISOString().slice(0,7);
 const prev = () => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return d.toISOString().slice(0,7);};
@@ -1129,6 +1129,16 @@ function App() {
     React.createElement('button',{className:'btn btn-primary',disabled:busy||(!exportSingle&&!exportGroups.length),onClick:doExport},React.createElement(Download,{size:16}),' Pregled / Spremi PDF'))),
         modal === 'settings' && React.createElement(Dialog, { title: "Postavke i sigurnosna kopija", onClose: () => setModal(null) },
             React.createElement("div", { className: "settings-items" },
+                React.createElement('div',{className:'settings-block'},
+                    React.createElement('h3',null,'Jezik aplikacije'),
+                    React.createElement('p',null,'Izberi jezik za celoten vmesnik in okna za obračune.'),
+                    React.createElement('select',{
+                        value:window.OB_I18N?.language()||'sl',
+                        onChange:e=>window.OB_I18N?.setLanguage(e.target.value),
+                        'aria-label':'Jezik aplikacije',
+                        style:{width:'100%',minHeight:39,padding:9,border:'1px solid #cbd5e1',borderRadius:7}
+                    },React.createElement('option',{value:'sl'},'Slovenščina'),
+                      React.createElement('option',{value:'bs'},'Bosanski'))),
                 React.createElement("div", { className: "settings-block" },
                     React.createElement("h3", null, "Firma koja izrađuje obračune"),
                     React.createElement("p", null, "Naziv firme se automatski ispisuje kao Izvajalec na obračunskom listu ako gradilište nema drugi naziv izvođača."),
