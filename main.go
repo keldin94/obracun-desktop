@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	appVersion      = "0.3.10"
+	appVersion      = "0.3.11"
 	listenAddress   = "127.0.0.1:17861"
 	defaultRepo     = "keldin94/obracun-desktop"
 	executableAsset = "Obracun-Windows.exe"
@@ -35,7 +35,7 @@ func updateAssetName() string {
 	return "Obracun-Setup-Windows.exe"
 }
 
-//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js app/i18n.js app/measurement-editor.js app/periods.js app/report-v2.js app/signature-pad.js app/runtime.bundle.js branding/obracun-icon.svg app/cloud-config.json
+//go:embed app/index.html app/desktop.js app/cloud.js app/engineering.js app/i18n.js app/measurement-editor.js app/periods.js app/report-v2.js app/collage-layout.js app/collage.bundle.js app/modern-ui.css app/signature-pad.js app/runtime.bundle.js branding/obracun-icon.svg app/cloud-config.json
 var assets embed.FS
 
 type settings struct {
@@ -608,6 +608,22 @@ func main() {
 	}
 	u := newUpdater()
 	mux := http.NewServeMux()
+	for _, f := range []struct{ route, file, mime string }{
+		{"/collage-layout.js", "app/collage-layout.js", "text/javascript; charset=utf-8"},
+		{"/collage.bundle.js", "app/collage.bundle.js", "text/javascript; charset=utf-8"},
+		{"/modern-ui.css", "app/modern-ui.css", "text/css; charset=utf-8"},
+	} {
+		path, contentType := f.file, f.mime
+		mux.HandleFunc(f.route, func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet { w.WriteHeader(http.StatusMethodNotAllowed); return }
+			data, err := assets.ReadFile(path)
+			if err != nil { http.Error(w, "UI asset unavailable", http.StatusInternalServerError); return }
+			w.Header().Set("Content-Type", contentType)
+			w.Header().Set("Cache-Control", "no-store")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			_,_ = w.Write(data)
+		})
+	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
