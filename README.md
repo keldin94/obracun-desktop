@@ -126,3 +126,10 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 - Fizični list A4 ima **25 mm prostega prostora na levi za luknjanje in vpenjanje** ter **12 mm na desni, zgoraj in spodaj**. Predogled kaže celoten A4 (210 × 297 mm), tiskanje pa uporablja 173 × 273 mm uporabne površine brez dodatnih robov v vsebini.
 - Na stičišču delovne površine in podpisov ostane samo ena ločilna črta pod **Mesečna**, brez praznega presledka ali dvojne obrobe.
 - Za pravilne dimenzije tiskaj na A4 v merilu **100 % / Actual size**; ne vključi dodatnega prilagajanja velikosti. Testi preverjajo robove, enako velikost delovne površine v predogledu in tisku ter mejo med delovno površino in podpisi.
+
+### OBRAČUN v0.3.10 — širša delovna površina in poenostavljena glava
+
+- Robovi A4 so **20 mm levo** za vpenjanje v gradbeno knjigo ter **7 mm zgoraj, spodaj in desno**. Natisljiva vsebina meri **183 × 283 mm**, predogled ostane na fizičnem listu **210 × 297 mm**.
+- Naslov obračunskega lista vsebuje samo številko lista in strani: **OBRAČUNSKI LIST št. 3 · Stran 1**. Ni več oznake `1 / 3` ali meseca v naslovu.
+- Meseci so povsod zapisani s polnim imenom in celotnim letom, npr. **November 2026**. Obračunsko obdobje ostane navedeno ob **Naročnik** in **Izvajalec**, tudi pri dvakrat mesečnem obračunu.
+- Obstoječi podatki, stolpci, skice in podpisi ostanejo nespremenjeni.
