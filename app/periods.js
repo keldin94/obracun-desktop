@@ -5,7 +5,6 @@
 (function(root){
  'use strict';
  const MONTHS=['Januar','Februar','Marec','April','Maj','Junij','Julij','Avgust','September','Oktober','November','December'];
- const SHORT=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Avg','Sep','Okt','Nov','Dec'];
  function frequency(project){return Number(project?.billingFrequency)===2?2:1}
  function monthIndex(month){const [y,m]=String(month||'').split('-').map(Number);return y*12+(m-1)}
  function monthFromIndex(idx){const y=Math.floor(idx/12),m=(idx%12+12)%12+1;return y+'-'+String(m).padStart(2,'0')}
@@ -29,10 +28,10 @@
  function belongs(entry,project,month,half=1){const e=entryMoment(entry,project),p=period(project,month,half);return e.month===p.month&&e.half===p.half}
  function until(entry,project,month,half=1){const e=entryMoment(entry,project),p=period(project,month,half);return index(project,e.month,e.half)<=index(project,p.month,p.half)}
  function before(entry,project,month,half=1){const e=entryMoment(entry,project),p=period(project,month,half);return index(project,e.month,e.half)<index(project,p.month,p.half)}
- function label(project,month,half=1,short=false){
+ function label(project,month,half=1){
   const [year,m]=String(month||'').split('-').map(Number);
   if(!year||m<1||m>12)return month;
-  const title=(short?SHORT:MONTHS)[m-1]+" '"+String(year).slice(-2);
+  const title=MONTHS[m-1]+' '+year;
   return frequency(project)===2?title+'/'+(Number(half)===2?2:1):title;
  }
  function firstDate(month,half=1){return month+'-'+(Number(half)===2?'16':'01')}
