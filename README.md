@@ -119,3 +119,10 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 - A4 obračunski list ima vedno enako veliko območje **Skice, izmere, izračuni**, tudi brez skic. Območje se razteza do podpisov; podpisi so znova poravnani ob spodnjem robu uporabnega območja strani.
 - Obračunski prikaz na zaslonu in pri tiskanju uporabljata iste dimenzije tiskalne površine A4: 186 × 277 mm pri robovih 12 mm levo/desno in 10 mm zgoraj/spodaj. Datum, račun, podpis in druge vrednosti ostanejo nespremenjene.
 - Samodejni testi z brskalnikom preverjajo celotno skrčenje vrstice, razpoložljivost brisanja, višino okvirja, položaj podpisov ter ujemanje predogleda s tiskanim PDF.
+
+### OBRAČUN v0.3.9 — tisk varno za vstavljanje v gradbeno knjigo
+
+- Ob podatkih **Naročnik** in **Izvajalec** je izpis **Obračun za obdobje: November '26** oziroma **November '26/1** ali **November '26/2** za obračune dvakrat mesečno.
+- Fizični list A4 ima **25 mm prostega prostora na levi za luknjanje in vpenjanje** ter **12 mm na desni, zgoraj in spodaj**. Predogled kaže celoten A4 (210 × 297 mm), tiskanje pa uporablja 173 × 273 mm uporabne površine brez dodatnih robov v vsebini.
+- Na stičišču delovne površine in podpisov ostane samo ena ločilna črta pod **Mesečna**, brez praznega presledka ali dvojne obrobe.
+- Za pravilne dimenzije tiskaj na A4 v merilu **100 % / Actual size**; ne vključi dodatnega prilagajanja velikosti. Testi preverjajo robove, enako velikost delovne površine v predogledu in tisku ter mejo med delovno površino in podpisi.
