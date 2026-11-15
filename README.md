@@ -1,4 +1,4 @@
-# OBRAČUN v0.3.6 — Windows i macOS Intel
+# OBRAČUN v0.3.7 — Windows i macOS Intel
 
 ## Windows instalacija (10/11 x64)
 
@@ -62,10 +62,10 @@ U nastavku zadržati korisničke podatke u istoj putanji i instalacijsku putanju
 ### Dodatna polja prema knjizi obračunskih izmera (v0.3.1)
 U Podacima gradilišta možeš unijeti obračunski nacrt, stroškovno mjesto, izvođača, pripremio, predstavnika naručioca i odgovornog voditelja radova. Polja se ispisuju na A4 obračunskim listovima. Pojedinačne izmjere mogu imati oznaku materijala ili kvalitete betona. Nedovršena dimenzijska formula ne može se spremiti.
 
-### Fix v0.3.6 — white startup screen
+### Fix v0.3.7 — white startup screen
 React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at build time and served offline. The old embedded React 16 libraries (without hooks) were removed. GitHub Actions now runs a real Chromium UI smoke test before publishing an installer. To build from source, run `npm install && npm run build:runtime && go test ./... && go build .`. Existing user data stays in the same profile.
 
-## v0.3.6 — Slobodni obračunski izrazi i izgled lista
+## v0.3.7 — Slobodni obračunski izrazi i izgled lista
 
 - Slobodne formule po redu koriste simbole a,b,c,h,d,q,r,t,kos i dodatna slova s vrijednostima; znak x ili * označava množenje, a zagrade određuju redoslijed. Podržani su +,−,×,÷; izračun se čuva punom preciznošću.
 - Posebno polje **Pozicije armature** ostaje uz izmjeru i ispisuje se u proračunu.
@@ -75,7 +75,7 @@ React 18, ReactDOM and Lucide icons are bundled into `app/runtime.bundle.js` at 
 - Na svakom listu su **Mesečna** (tekući mjesec) i **Skupna** (prethodno + tekući) desne kolone; PDF prikaz ostaje optimiziran za A4.
 - Ako ima mnogo priloga/dimenzija, ispis može zahtijevati dodatnu stranicu kako bi sve ostalo čitljivo.
 
-## OBRAČUN Cloud — v0.3.6
+## OBRAČUN Cloud — v0.3.7
 
 **Cloud je centralno povezan** s namjenskim Supabase projektom `obracun` u regiji Frankfurt. Korisnici ne unose URL ni API ključeve.
 
@@ -90,7 +90,7 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 
 **Ograničenja:** Supabase Free nema automatske dnevne backupove i može pauzirati projekt nakon neaktivnosti. Za poslovnu upotrebu redovno izvezi vlastite sigurnosne kopije. Cloud sinhronizacija stvarnog korisničkog naloga treba završnu provjeru na Windowsu i Macu.
 
-## v0.3.6 – širši vnos izmer in jeziki
+## v0.3.7 – širši vnos izmer in jeziki
 - Vnos posamezne postavke se odpre v širokem urejevalniku do 1180 px.
 - Za kg: naziv dela, masa v kg, pozicije armature, po želji razdelitev po premerih Ø6–32 in razredi do vključno Ø12 / od Ø14.
 - Za m³: a, b, c (ali a, b, h/d); za m²: a, b; za kos: število kosov. Dodatne mere in formule so na voljo po potrebi.
@@ -98,4 +98,16 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 - **Nastavitve → Jezik aplikacije**: Slovenščina (privzeto) ali Bosanski. Jezik je ločen od podatkov in se shrani na napravi. Številčni izrazi in projektna imena se ne prevajajo.
 - Obstoječe izmere in projektna baza ostanejo nespremenjene; nove vrste izmer uporabljajo dodatna polja v obstoječem formatu.
 
-**v0.3.6:** Posodobljena jezikovna pokritost; test v Chromiumu preveri tudi dejanski vnos kg in m³, oznake armature, široko okno in formulo s spremenljivkami. Podatki se ohranijo v obstoječem profilu.
+**v0.3.7:** Posodobljena jezikovna pokritost; test v Chromiumu preveri tudi dejanski vnos kg in m³, oznake armature, široko okno in formulo s spremenljivkami. Podatki se ohranijo v obstoječem profilu.
+
+## OBRAČUN v0.3.7 – obračunski listi in dvakrat mesečni obračuni
+
+- Pri novem gradbišču nastavi **1 × mesečno** (privzeto) ali **2 × mesečno** (1.–15. in 16.–zadnji dan); stare izmere se razvrstijo glede na datum. Prikaz prejšnjega obdobja in vsota sta vezana na izbrano polovico meseca.
+- Za vsako postavko se takoj odpre prazna vrstica. Nova vrstica se prikaže zgoraj, starejše se zaprejo; na obračunskem listu se vrstni red obrne v kronološko zaporedje. Gumb **Shrani izmero** zapre urejevalnik in vrne v popis.
+- Številka **obračunskega lista** je vezana na izvirni položaj postavke v popisu gradbišča, ne na trenutno filtrirano postavko; dodatne strani imajo **Stran 2 / N**.
+- Stolpci A/B/C/... se izpišejo le, če imajo vrednosti; ob vsakem zapisu je enotno prikazana numerična formula in končna količina. Za kg neposredno merjene armature se ne izpiše odvečna kolona `kos`.
+- Spodnji seštevek kaže **Mesečna**; **Skupna** ostane v desnem stolpcu; odstranjen je podvojeni seštevek na dnu.
+- V novem in obstoječem projektu lahko sam podpišeš polje **Sestavil** z modrim črnilom; osebni podpis ostane v podatkih projekta in se izpiše na vseh straneh obračuna. Podpisi naročnika in izvajalca se samodejno ne dodajajo.
+- Iz posamezne postavke lahko izbereš tudi druge postavke za izvoz v isti PDF; vedno gre le za trenutno obračunsko obdobje. Levo spodaj je števec predvidenih strani za odprto postavko.
+
+**Pozor:** število strani se načrtuje glede na vrstice in skice; pri izjemno dolgih opisih lahko tiskalnik/PDF upravljalnik dodatno prelomi stran. Pred oddajo vedno preveri predogled tiska. Stare podatkovne strukture niso izbrisane.
