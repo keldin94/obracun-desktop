@@ -3,6 +3,7 @@ const assert=require('node:assert/strict');
 global.window=global;
 require('../engineering.js');
 require('../periods.js');
+require('../collage-layout.js');
 require('../report-v2.js');
 const E=global.OBR_ENGINEERING,P=global.OBR_PERIODS;
 const project={id:'p',name:'Testno gradbišče',billingFrequency:2,
