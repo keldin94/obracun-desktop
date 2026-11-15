@@ -60,7 +60,7 @@ test('PDF sadrži odvojene Mesečna/Skupna kolone, opombe i oznake armature',asy
   {itemId:'I',month:'2026-11',quantity:90,place:'Plošča',measurements:[{mode:'weight',a:'30',kos:'3',rebarPositions:'2, 5, 8'}]}
  ];
  const html=await E.buildReport({project,items:[item],entries,proofs:[],month:'2026-11',groups:['Betonska dela'],includeSummary:false,companyName:'Firma d.o.o.',getFile:async()=>null,fileToDataUrl:async()=>null});
- for(const t of ['ledger-month','ledger-cumulative','Mesečna','Skupna','135,00','90,00','Plošča nad pritličjem','Poz. armature','Firma d.o.o.']){
+ for(const t of ['ledger-month','ledger-cumulative','Mesečna','Skupna','135,00','90,00','Plošča nad pritličjem','Pozicije armature','Firma d.o.o.']){
   assert.ok(html.includes(t),'Missing '+t);
  }
 });
