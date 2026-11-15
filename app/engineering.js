@@ -295,5 +295,5 @@ async function buildReport({project,items,entries,proofs,month,groups,selectedId
   <h2>UKUPNO ZA MJESEC: ${money(total)}</h2><div class="spacer"></div><p class="muted">Obračunski period: ${esc(dateLabel)}. Izmjere su računane punom preciznošću, na ispisu zaokružene na dvije decimale.</p></section>`}
  return '<!doctype html><html lang="sl"><head><meta charset="utf-8">'+css+'</head><body>'+cover+pages+'</body></html>';
 }
-window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,evaluateVariables,isValidRow,calcRow,calcRows,mathExpression,buildReport};
+window.OBR_ENGINEERING={GROUPS,n,num,money,esc,groupFromHeading,groupForPosition,heading,rotateImageData,evaluateVariables,isValidRow,calcRow,calcRows,mathExpression,buildReport};
 })();

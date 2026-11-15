@@ -29,7 +29,7 @@ function tableOf(lines,all,unit){
  '<th>Izračun</th><th>Količina</th></tr></thead>';
  const body=lines.map(({entry:e,row,j})=>{
   const calc=row?E.calcRow(row):null;
-  const label=row?.label||e.place||e.description||String.fromCharCode(65+j);
+  const label=row?.label||e.place||e.description||String.fromCharCode(65+(Number(j)||0));
   const notes=row?[
     row.material?'Material: '+row.material:'',
     row.rebarPositions?'Pozicije armature: '+row.rebarPositions:'',

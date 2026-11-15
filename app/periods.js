@@ -43,7 +43,12 @@
  }
  // Stable estimate follows report chunking; full output page count belongs to the same helper.
  function planPages(entries,proofs){
-  const rows=(entries||[]).flatMap(e=>(e.measurements?.length?e.measurements:[e]).map(row=>({entry:e,row})));
+  const rows=[...(entries||[])].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||
+   String(a.createdAt||'').localeCompare(String(b.createdAt||'')))
+   .flatMap(e=>(e.measurements?.length?[...e.measurements].sort((a,b)=>{
+    const aSeq=Number(a._seq),bSeq=Number(b._seq);
+    return Number.isFinite(aSeq)&&Number.isFinite(bSeq)?aSeq-bSeq:0;
+   }):[null]).map((row,j)=>({entry:e,row,j})));
   const images=(proofs||[]).filter(p=>String(p.mime||'').startsWith('image/'));
   const other=(proofs||[]).filter(p=>!String(p.mime||'').startsWith('image/'));
   const pageList=[];let ri=0,pi=0;
