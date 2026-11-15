@@ -52,6 +52,15 @@ test('PDF for a single selected popis position keeps list no 3, labels, aligned 
  assert.ok(html.includes('1 × 3 × 1 × 1')&&html.includes('3 × 2 × 2 × 1'),'Full numeric formulas for both rows');
  assert.ok(html.indexOf('1 × 3 × 1 × 1')<html.indexOf('3 × 2 × 2 × 1'),'Older row is first');
  assert.ok(html.includes('class="ink"'),'Blue signature included');
+ assert.ok(html.includes('Obračun za obdobje: <strong>November &#39;26/2</strong>'),
+    'Period must appear alongside Naročnik and Izvajalec');
+ assert.ok(html.includes('@page{size:A4 portrait;margin:12mm 12mm 12mm 25mm}'),
+    'A4 print must reserve 25mm on the binding edge');
+ assert.ok(html.includes('.page.sheet{display:flex;flex-direction:column;width:210mm;height:297mm'),
+    'Preview must show the entire physical A4 paper');
+ assert.ok(html.includes('.page.sheet .signatures{flex:0 0 25mm;height:25mm;min-height:25mm;margin-top:0;border-top:0}'),
+    'Signature section must share only the ledger border at its top');
+
  assert.ok(!html.includes('SKUPAJ:')&&!html.includes('Skupna: <b>'),'No duplicate totals');
 });
 test('Print pages are deterministically split and individually numbered',async()=>{
