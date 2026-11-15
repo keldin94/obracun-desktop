@@ -1,6 +1,6 @@
 {
   "name": "keldin-obracun-desktop-runtime",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "private": true,
   "description": "Offline browser UI runtime used by the Windows and macOS desktop executables",
   "scripts": {
