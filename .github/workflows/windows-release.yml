@@ -156,7 +156,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "v0.3.5: Širok urejevalnik izmer, prilagojen merski enoti (kg za armaturo, m3, m2, kos), enostavne kg količine in pozicije armature, neobvezna razčlenitev po premerih, klikljiva matematična tipkovnica z oklepaji in potencami, samodejni izračun in formula na obračunskem listu. Izbira jezika Slovenščina/Bosanski v nastavitvah. Pred posodobitvijo naredi varnostno kopijo; podatki o gradbiščih in cloud ostanejo na istem mestu."
+            --notes "v0.3.6: Novi široki urejevalnik obračunov (kg, m3, m2, kos), prost vnos mase in armaturnih pozicij, opcijske količine po Ø, napredne formule s spremenljivkami in potencami ter ohranjen izpis izračuna v PDF. Slovenščina kot privzeti jezik z možnostjo preklopa na bosanščino. Posodobljena lokalizacija Excel uvoza, PDF izvoza, gradbišč, obvestil in obrazcev. Ohranjeni podatki in Supabase sinhronizacija. Priporočamo varnostno kopijo."
 
   windows-installer-smoke:
     needs: desktop-release
