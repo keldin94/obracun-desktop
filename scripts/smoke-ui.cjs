@@ -79,7 +79,14 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    await page.getByRole('button',{name:/Dodaj vrstico/}).first().click();
    assert.equal(await page.locator('.ob-measure-card').count(),2);
    assert.equal(await page.locator('.ob-measure-card.ob-collapsed').count(),1,'Old row should collapse');
-   await page.locator('.ob-measure-card.ob-expanded').getByRole('button',{name:'Odstrani vrstico'}).click();
+   const folded=page.locator('.ob-measure-card.ob-collapsed');
+   assert.equal(await folded.locator('.ob-expanded-row').count(),0,'Collapsed row still shows input fields or formula');
+   assert.equal(await folded.locator('input').count(),0,'Collapsed row must not render any inputs');
+   assert.equal(await folded.getByRole('button',{name:/Odstrani vrstico/}).count(),1,'Remove button must remain visible on collapsed row');
+   const foldedBounds=await folded.boundingBox();
+   assert.ok(foldedBounds.height<75,'Collapsed row is not a single compact line: '+foldedBounds.height);
+   await page.locator('.ob-measure-card.ob-expanded').getByRole('button',{name:/Odstrani vrstico/}).click();
+   assert.equal(await page.locator('.ob-measure-card.ob-expanded').count(),1,'Remaining row should reopen after deleting the active row');
    await page.locator('.ob-measure-grandtotal').getByText(/23,500|23\.500/).waitFor();
    await page.locator('.ob-measure-card label').filter({hasText:'Številke armaturnih pozicij'}).locator('input').fill('4, 7, 12');
    assert.ok(await page.locator('.ob-measure-card').getByText(/Razčlenitev po premerih/).count()>0,'Armature diameter breakdown option missing');
@@ -106,6 +113,53 @@ if(!expectedVersion)throw Error('Version not found in main.go');
    assert.ok(await page.locator('.ob-export-choice').count()>=2,'Missing selectable other sheets');
    assert.deepEqual(failures,[],'Errors after saving and opening PDF selection');
 
+   // A4 proof: empty and populated measurement sheets must retain the full-height work box
+   // and the signature block at the bottom in both preview and print media.
+   const makeSheet=async (itemId,includeEmpty)=>page.evaluate(async ({itemId,includeEmpty})=>{
+     const state=JSON.parse(localStorage.getItem('obracun-webapp-v1'));
+     return window.OBR_ENGINEERING.buildReport({
+       project:state.projects[0],items:state.items,entries:state.entries,proofs:[],
+       month:'2026-11',selectedIds:[itemId],includeSummary:false,includeEmpty,
+       getFile:async()=>null,fileToDataUrl:async()=>null
+     });
+   },{itemId,includeEmpty});
+   const printPage=await browser.newPage({viewport:{width:1600,height:1200}});
+   try{
+     const measureLayout=()=>printPage.evaluate(()=>{
+       const page=document.querySelector('.page.sheet');
+       const ledger=document.querySelector('.page.sheet .ledger');
+       const signatures=document.querySelector('.page.sheet .signatures');
+       const p=page.getBoundingClientRect(),l=ledger.getBoundingClientRect(),s=signatures.getBoundingClientRect();
+       return {
+         pageHeight:p.height,ledgerHeight:l.height,signaturesHeight:s.height,
+         signatureBottomGap:p.bottom-s.bottom,workToSignatureGap:s.top-l.bottom,
+         overflow:page.scrollHeight-page.clientHeight
+       };
+     });
+     const withData=await makeSheet('VOLUME_CI',false);
+     await printPage.setContent(withData,{waitUntil:'load'});
+     const populated=await measureLayout();
+     assert.ok(populated.ledgerHeight>550,'Work box must occupy most of the printable page: '+JSON.stringify(populated));
+     assert.ok(Math.abs(populated.signatureBottomGap)<4,'Signature is not at page bottom: '+JSON.stringify(populated));
+     assert.ok(populated.workToSignatureGap>=0 && populated.workToSignatureGap<20,'Excess gap between work area and signature: '+JSON.stringify(populated));
+     assert.ok(populated.overflow<=3,'Sheet content spills beyond A4: '+JSON.stringify(populated));
+     await printPage.emulateMedia({media:'print'});
+     const printGeometry=await measureLayout();
+     assert.ok(Math.abs(printGeometry.signatureBottomGap)<4 && Math.abs(populated.ledgerHeight-printGeometry.ledgerHeight)<4,
+       'Screen and print layouts disagree: '+JSON.stringify({populated,printGeometry}));
+     const pdf=await printPage.pdf({preferCSSPageSize:true,printBackground:true});
+     assert.ok(pdf.subarray(0,5).toString()==='%PDF-','Printed PDF was not produced');
+     await printPage.emulateMedia({media:'screen'});
+     const withoutData=await makeSheet('STEEL_CI',true);
+     await printPage.setContent(withoutData,{waitUntil:'load'});
+     const empty=await measureLayout();
+     assert.ok(Math.abs(populated.ledgerHeight-empty.ledgerHeight)<4,'Empty sheet lost its full-height work area: '+JSON.stringify({populated,empty}));
+     assert.ok(Math.abs(empty.signatureBottomGap)<4,'Signatures moved on an empty sheet: '+JSON.stringify(empty));
+   }finally{
+     await printPage.close();
+   }
+   assert.deepEqual(failures,[],'Page errors during full-height A4 and collapsed-row tests');
+   console.log('PASS: compact rows with persistent remove; full-height A4 with anchored signatures in screen and print.');
 
    console.log('PASS: real React UI rendered, click works, no browser errors.');
  }finally{
