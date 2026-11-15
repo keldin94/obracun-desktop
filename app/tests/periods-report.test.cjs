@@ -77,3 +77,16 @@ test('Print pages are deterministically split and individually numbered',async()
  assert.ok(!/Stran [1-9]+\s*\//.test(html),'Do not show total page count');
  assert.equal((html.match(/class="page sheet"/g)||[]).length,3);
 });
+
+test('Extra sketches become linked appendix pages instead of new invoice sheets',async()=>{
+ const proofs=Array.from({length:8},(_,i)=>({
+  id:'proof'+i,itemId:'i3',projectId:'p',month:'2026-11',billingHalf:2,
+  filename:'Skica '+(i+1)+'.png',caption:'Skica '+(i+1),mime:'image/png',createdAt:'2026-11-22'
+ }));
+ const html=await E.buildReport({project,items,entries,proofs,month:'2026-11',half:2,
+  selectedIds:['i3'],includeSummary:false,getFile:async()=>null,fileToDataUrl:async()=>null});
+ assert.equal((html.match(/class="page sheet"/g)||[]).length,1);
+ assert.equal((html.match(/class="page appendix"/g)||[]).length,1);
+ assert.ok(html.includes('PRILOGA K OBRAČUNSKEMU LISTU št. 3 · Stran 1'));
+ assert.ok(html.includes('Dodatne skice so prikazane v prilogah'));
+});
