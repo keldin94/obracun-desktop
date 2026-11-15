@@ -223,7 +223,7 @@ const orig=baseReact.createElement;
 window.React={...baseReact,createElement:function(tag,props,...children){
   const next=props?{...props}:{};
   if(next){
-    for(const key of ['placeholder','title','aria-label','alt']){
+    for(const key of ['placeholder','title','aria-label','alt','label','hint','description']){
       if(typeof next[key]==='string')next[key]=t(next[key]);
     }
     if(tag==='option' && next.value==null && typeof children[0]==='string'){
