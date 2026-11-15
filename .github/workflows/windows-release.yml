@@ -34,7 +34,9 @@ jobs:
           npm install --no-audit --no-fund
           npm run build:runtime
           test -s app/runtime.bundle.js
+          test -s app/collage.bundle.js
           node --check app/runtime.bundle.js
+          node --check app/collage.bundle.js
       - name: Unit tests
         run: |
           go test ./...
@@ -46,9 +48,10 @@ jobs:
           node --check app/measurement-editor.js
           node --check app/engineering.js
           node --check app/periods.js
+          node --check app/collage-layout.js
           node --check app/report-v2.js
           node --check app/signature-pad.js
-          node --test app/tests/engineering.test.cjs app/tests/periods-report.test.cjs
+          node --test app/tests/engineering.test.cjs app/tests/periods-report.test.cjs app/tests/collage-layout.test.cjs
           node -e 'const fs=require("fs");const s=fs.readFileSync("app/index.html","utf8");const x=s.split("<script>const KEY = ")[1].split("</script><script src=\"/desktop.js\">")[0];new Function("const KEY = "+x);'
           python3 -m json.tool app/cloud-config.json >/dev/null
           test -s supabase/002_organizations.sql
@@ -159,7 +162,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "OBRAČUN v0.3.10: A4 obračunski list ima 20 mm levi rob za vezavo in 7 mm zgornji, spodnji ter desni rob. Predogled ostane A4 210 × 297 mm, tiskana vsebina meri 183 × 283 mm. Glava vsebuje samo številko obračunskega lista in tekočo številko strani, brez obdobja ali zapisa 1/3. Meseci so povsod izpisani s polnim imenom in polno letnico, npr. November 2026; obdobje ostane ob podatkih Naročnik in Izvajalec. Podatki in sinhronizacija so ohranjeni."
+            --notes "OBRAČUN v0.3.11: Nov kompaktni uporabniški vmesnik z velikim urejevalnikom, galerijo skic, predogledom A4 v živo ter prilagodljivimi kolaži. Dodane so predloge, način Uredi sam, premikanje in spreminjanje velikosti skic, vrstni red z drag-and-drop, prilagajanje na eno stran in samodejne priloge, ki niso novi obračunski listi. Obstoječi izračuni, projekti in uporabniški podatki ostanejo ohranjeni."
 
   windows-installer-smoke:
     needs: desktop-release
