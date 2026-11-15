@@ -133,3 +133,9 @@ Promjene se spremaju lokalno i sinhronizuju automatski. Provjera novih podataka 
 - Naslov obračunskega lista vsebuje samo številko lista in strani: **OBRAČUNSKI LIST št. 3 · Stran 1**. Ni več oznake `1 / 3` ali meseca v naslovu.
 - Meseci so povsod zapisani s polnim imenom in celotnim letom, npr. **November 2026**. Obračunsko obdobje ostane navedeno ob **Naročnik** in **Izvajalec**, tudi pri dvakrat mesečnem obračunu.
 - Obstoječi podatki, stolpci, skice in podpisi ostanejo nespremenjeni.
+
+### OBRAČUN v0.3.12 — ujemanje kolaža s tiskom in razvrščanje
+
+- Urejevalnik kolaža prevzame dejansko razmerje območja skic iz A4 predogleda. Skice in tisk uporabljajo enake položaje ter velikosti; imena so neposredno pod slikami z nežnima črtama ob straneh.
+- Preglednica postavk omogoča dvostransko razvrščanje po šifri, nazivu, enoti, količini po popisu, mesečni in skupni količini ter odstotku realizacije. Filtri, izvorne številke postavk in izračuni ostanejo nespremenjeni.
+- Hranjenje skic ostane nespremenjeno; povezava z zunanjim OneDrive je predmet ločene avtorizacije.
