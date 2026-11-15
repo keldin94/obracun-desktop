@@ -162,7 +162,7 @@ jobs:
             Obracun-macOS-Intel Obracun-macOS-Intel.sha256 Obracun-macOS-Intel.zip \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "OBRAČUN v$VERSION (Windows + macOS Intel)" \
-            --notes "OBRAČUN v0.3.11: Nov kompaktni uporabniški vmesnik z velikim urejevalnikom, galerijo skic, predogledom A4 v živo ter prilagodljivimi kolaži. Dodane so predloge, način Uredi sam, premikanje in spreminjanje velikosti skic, vrstni red z drag-and-drop, prilagajanje na eno stran in samodejne priloge, ki niso novi obračunski listi. Obstoječi izračuni, projekti in uporabniški podatki ostanejo ohranjeni."
+            --notes "OBRAČUN v0.3.12: Urejevalnik kolaža se prilagodi pravim razmerjem površine za skice na A4 predogledu. Imena skic so tik pod sliko s subtilnima črtama levo/desno, enako na zaslonu in v PDF. V popisu del lahko s klikom na glave razvrstimo šifro, postavko, JM, po popisu, ta mesec, skupaj in realizacijo naraščajoče ali padajoče. Obstoječi podatki in sinhronizacija so ohranjeni."
 
   windows-installer-smoke:
     needs: desktop-release
