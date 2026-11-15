@@ -64,3 +64,23 @@ test('PDF sadrži odvojene Mesečna/Skupna kolone, opombe i oznake armature',asy
   assert.ok(html.includes(t),'Missing '+t);
  }
 });
+
+
+test('Potenčna formula: a², potence in oklepaji pri izmeri',()=>{
+ const row={a:'8,35',b:'19,62',c:'0,2',kos:'1',formula:'a² + (b-c)^2'};
+ const expected=8.35*8.35+(19.62-.2)**2;
+ assert.ok(Math.abs(E.calcRow(row).result-expected)<1e-8);
+ assert.ok(E.isValidRow(row));
+ assert.equal(E.isValidRow({...row,formula:'a^1000'}),false);
+ assert.equal(E.isValidRow({...row,formula:'a^('}),false);
+});
+test('Armaturna masa po postavkah ali premerih, s sledljivostjo pozicij',()=>{
+ const lump={mode:'rebar',label:'Stena H1',direct:'975,50',rebarPositions:'2, 5, 8-10'};
+ assert.ok(E.isValidRow(lump));
+ assert.equal(E.calcRow(lump).result,975.5);
+ const diameters={mode:'rebar',label:'Stebri',direct:'',rebarCategory:'do12',diameterBreakdown:[{fi:'10',kg:'23,5'},{fi:'12',kg:'42,75'}]};
+ assert.ok(E.isValidRow(diameters));
+ assert.equal(E.calcRow(diameters).result,66.25);
+ assert.equal(E.calcRow({...diameters,sign:'-'}).result,-66.25);
+ assert.equal(E.isValidRow({mode:'rebar',direct:'',diameterBreakdown:[]}),false);
+});
