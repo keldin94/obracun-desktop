@@ -8,20 +8,26 @@ function isArea(unit){return ['m²','m2'].includes(String(unit||'').toLowerCase(
 function isVolume(unit){return ['m³','m3'].includes(String(unit||'').toLowerCase())}
 function isPieces(unit){return ['kos','kom','kom.','pcs'].includes(String(unit||'').toLowerCase())}
 const simpleSelect=(value,onChange,choices)=>h('select',{value,onChange},...choices.map(([v,l])=>h('option',{key:v,value:v},l)));
+function blankRow(unit,seq=1){
+ const type=isSteel(unit)?'rebar':isVolume(unit)?'cubic':isArea(unit)?'area':isPieces(unit)?'pieces':'length';
+ return {_seq:seq,label:'',mode:type,sign:'+',kos:'1',a:'',b:'',c:'',h:'',d:'',q:'',r:'',t:'',direct:'',openings:'',formula:'',material:'',rebarPositions:'',rebarCategory:'',diameterBreakdown:[],extraVariables:{}};
+}
+
 function MeasurementRows({form,setForm,unit}){
  const rows=Array.isArray(form.measurements)?form.measurements:[];
  const inputs=React.useRef({});
+ const [expandedSeq,setExpandedSeq]=React.useState(()=>rows.length?(rows[0]._seq??0):null);
  const unitType=isSteel(unit)?'steel':isVolume(unit)?'volume':isArea(unit)?'area':isPieces(unit)?'pieces':'other';
  const update=next=>setForm({...form,measurements:next,expression:E.mathExpression(next)});
  const patch=(i,changes)=>update(rows.map((r,j)=>i===j?{...r,...changes}:r));
  const erase=i=>update(rows.filter((_,j)=>j!==i));
  const defaultMode={steel:'rebar',volume:'cubic',area:'area',pieces:'pieces',other:'length'};
- const newRow=()=>({
-    label:'',mode:defaultMode[unitType],sign:'+',kos:'1',a:'',b:'',c:'',h:'',d:'',
-    q:'',r:'',t:'',direct:'',openings:'',formula:'',material:'',
-    rebarPositions:'',rebarCategory:'',diameterBreakdown:[],extraVariables:{}
- });
- const add=()=>update([...rows,newRow()]);
+ const add=()=>{
+  const seq=Math.max(0,...rows.map((r,i)=>Number.isFinite(Number(r._seq))?Number(r._seq):(i+1)))+1;
+  const row=blankRow(unit,seq);
+  setExpandedSeq(seq);
+  update([row,...rows.map((r,i)=>r._seq===undefined?{...r,_seq:rows.length-i}:r)]);
+ };
  const fld=(row,i,key,label,opt={})=>h('label',{key,className:'measure-field',
     style:{minWidth:opt.width||'112px',flex:opt.flex||'1 1 105px'}},
    h('small',null,label),
@@ -107,14 +113,23 @@ function MeasurementRows({form,setForm,unit}){
    );
  };
  const rowEditor=(row,i)=>{
+  const seq=row._seq??(rows.length-i);
+  const expanded=expandedSeq===seq;
   const steelMode=unitType==='steel';
   const valid=E.isValidRow(row),calculated=E.calcRow(row);
-  return h('article',{key:i,className:'ob-measure-card'},
+  return h('article',{key:seq,className:'ob-measure-card'+(expanded?' ob-expanded':' ob-collapsed')},
     h('header',{className:'ob-row-head'},
-      fld(row,i,'label','Oznaka / ime dela',{text:true,width:'245px',placeholder:'A, B ali Stena v osi H1'}),
+      h('button',{type:'button',className:'ob-row-toggle','aria-expanded':expanded,
+         onClick:()=>setExpandedSeq(expanded?null:seq)},
+         h('strong',null,(row.label||'Vrstica '+seq)),
+         h('span',null,valid?E.num(calculated.result,3)+' '+unit:'Neizpolnjeno'),
+         h('span',null,expanded?'▴':'▾')),
+    expanded&&h('div',{className:'ob-expanded-row'},
+    h('div',{className:'ob-row-header-fields'},
+      fld(row,i,'label','Oznaka / ime dela',{text:true,width:'245px',placeholder:'Naziv oznake (npr. A, B, …)'}),
       h('label',{className:'measure-field ob-sign-field'},h('small',null,'Predznak'),
        simpleSelect(row.sign||'+',e=>patch(i,{sign:e.target.value}),[['+','+ Prištej'],['-','− Odštej']])),
-      h('button',{type:'button',className:'btn btn-outline',onClick:()=>erase(i)},'Odstrani vrstico')),
+      h('button',{type:'button',className:'btn btn-outline',onClick:()=>erase(i)},'Odstrani vrstico'))),
     steelMode?steel(row,i):
       h('div',{className:'ob-type-specific'},
        unitType==='volume'&&h('label',{className:'measure-field',style:{maxWidth:310}},h('small',null,'Standardna formula'),
@@ -138,7 +153,7 @@ function MeasurementRows({form,setForm,unit}){
       formulaInput(row,i)),
     h('footer',{className:'ob-row-total'},
       h('span',null,valid?(calculated.expression||'Izračunano'):(calculated.error||'Vnesi zahtevane mere')),
-      h('strong',null,valid?E.num(calculated.result,3)+' '+unit:'— '+unit)));
+      h('strong',null,valid?E.num(calculated.result,3)+' '+unit:'— '+unit)))); 
  };
  return h('section',{className:'ob-measure-editor'},
     h('header',{className:'ob-measure-top'},
@@ -152,4 +167,5 @@ function MeasurementRows({form,setForm,unit}){
     rows.length>0&&h('button',{type:'button',className:'text-action',onClick:()=>update([])},'Preklopi na preprost ročni izraz'));
 }
 window.OBR_MeasurementRows=MeasurementRows;
+window.OBR_newMeasureRow=blankRow;
 })();
